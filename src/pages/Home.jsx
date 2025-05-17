@@ -133,8 +133,9 @@ function Home() {
           {Object.values(learningProfile.subjects).some(subject => subject.quizAttempts.length > 0) ? (
             <h2 className="text-2xl md:text-3xl font-bold">Recommended For You</h2>
           ) : (
-          <h2 className="text-2xl md:text-3xl font-bold">Explore Popular Courses</h2>
-          
+          <>
+            <h2 className="text-2xl md:text-3xl font-bold">Explore Popular Courses</h2>
+            
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative">
               <input
@@ -170,6 +171,7 @@ function Home() {
               </div>
             </div>
           </div>
+          </>
           )}
         </div>
         
