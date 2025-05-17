@@ -463,8 +463,8 @@ function MainFeature() {
             </div>
           </div>
         ) : (
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-6">
+          showAdaptiveContent ? (
+            <div className="card p-6">
               <h3 className="text-xl font-bold">{selectedQuiz.title} - Detailed Results</h3>
               <div className="text-surface-600 dark:text-surface-300">
                 Score: {score}/{selectedQuiz.questions.length}
@@ -520,7 +520,8 @@ function MainFeature() {
               </button>
             </div>
           </div>
-        ) : showAdaptiveContent && (
+          ) : (
+          <div className="card p-6">
           <div className="card p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold flex items-center gap-2">
@@ -570,6 +571,7 @@ function MainFeature() {
                 Try Another Quiz
               </button>
             </div>
+        </div>
           </div>
         )}
       </motion.div>
