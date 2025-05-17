@@ -53,6 +53,18 @@
            hover:bg-surface-100 dark:hover:bg-surface-800
            focus:ring-surface-400;
   }
+  
+  .form-input {
+    @apply w-full px-4 py-2 border border-surface-300 dark:border-surface-600 rounded-lg
+           bg-white dark:bg-surface-800 text-surface-800 dark:text-surface-100
+           focus:ring-2 focus:ring-primary focus:border-primary;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1;
+  }
+  
+  
 
   .card {
     @apply bg-white dark:bg-surface-800 rounded-xl shadow-card 

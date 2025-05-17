@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { LearningProfileProvider } from './context/LearningProfileContext';
 import { ToastContainer } from 'react-toastify';
 import { getIcon } from './utils/iconUtils';
+import { useAuth } from './context/AuthContext';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import Profile from './pages/Profile';
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -12,6 +17,10 @@ function App() {
     return savedMode ? JSON.parse(savedMode) : 
            window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
+
+  const { currentUser, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     if (darkMode) {
@@ -26,10 +35,16 @@ function App() {
     setDarkMode(prevMode => !prevMode);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    setMenuOpen(false);
+  };
+
   // Get icons as components
   const SunIcon = getIcon('Sun');
   const MoonIcon = getIcon('Moon');
-
+  const UserIcon = getIcon('User');
+  const MenuIcon = getIcon('Menu');
   return (
     <LearningProfileProvider>
     <div className="min-h-screen">
@@ -44,19 +59,71 @@ function App() {
             </span>
           </div>
           
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded-full hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors"
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-4">
+              <Link to="/" className="text-surface-700 dark:text-surface-300 hover:text-primary dark:hover:text-primary transition-colors">
+                Home
+              </Link>
+              {currentUser ? (
+                <>
+                  <Link to="/profile" className="text-surface-700 dark:text-surface-300 hover:text-primary dark:hover:text-primary transition-colors">
+                    Profile
+                  </Link>
+                  <button onClick={handleLogout} className="text-surface-700 dark:text-surface-300 hover:text-primary dark:hover:text-primary transition-colors">
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link to="/login" className="text-surface-700 dark:text-surface-300 hover:text-primary dark:hover:text-primary transition-colors">
+                  Login
+                </Link>
+              )}
+            </div>
+            
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-full hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors"
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+            </button>
+            
+            <div className="relative md:hidden">
+              <button 
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="p-2 rounded-full hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors"
+              >
+                <MenuIcon className="w-5 h-5" />
+              </button>
+              
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-surface-800 rounded-lg shadow-lg border border-surface-200 dark:border-surface-700 py-2 z-50">
+                  <Link to="/" className="block px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 w-full text-left">Home</Link>
+                  {currentUser ? (
+                    <>
+                      <Link to="/profile" className="block px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 w-full text-left">Profile</Link>
+                      <button onClick={handleLogout} className="block px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 w-full text-left">Logout</button>
+                    </>
+                  ) : (
+                    <Link to="/login" className="block px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 w-full text-left">Login</Link>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </header>
-
       <main className="pt-16 pb-8 min-h-screen">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/login" element={currentUser ? <Navigate to="/" replace /> : <Login />} />
+          <Route path="/register" element={currentUser ? <Navigate to="/" replace /> : <Register />} />
+          <Route path="/forgot-password" element={currentUser ? <Navigate to="/" replace /> : <ForgotPassword />} />
+          <Route path="/profile" element={
+            !currentUser ? 
+            <Navigate to="/login" state={{ from: location }} replace /> : 
+            <Profile />
+          } />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
