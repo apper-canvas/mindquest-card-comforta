@@ -20,7 +20,6 @@ const initialLearningProfile = {
       difficultyLevel: 'beginner',
       quizAttempts: [],
       topics: {}
-    contentProgress: {},
     },
     mathematics: {
       proficiencyScore: 0,
@@ -34,6 +33,7 @@ const initialLearningProfile = {
     learningPace: 'moderate',
     showRecommendations: true
   },
+  contentProgress: {},
   completedCourses: [],
   certificates: []
 };
@@ -100,7 +100,6 @@ export function LearningProfileProvider({ children }) {
         completedCourses: [...(prevProfile.completedCourses || []), completedCourse],
         certificates: [...(prevProfile.certificates || []), certificateData]
       };
-      completedCourses: [...prev.completedCourses.filter(c => c.id !== course.id), course]
     }));
     
     return true;
@@ -116,6 +115,7 @@ export function LearningProfileProvider({ children }) {
         ...prev.contentProgress,
         [courseId]: progress
       }
+    }));
     
     return true;
   };
@@ -125,8 +125,6 @@ export function LearningProfileProvider({ children }) {
    * 
    * @param {Object} quizData - The quiz data including subject and title
    * @param {Array} userAnswers - Array of user's answers with correctness information
-    generateLearningPath,
-    updateContentProgress
    * @param {Number} totalQuestions - Total number of questions
    */
   const recordQuizAttempt = (quizData, userAnswers, score, totalQuestions) => {
@@ -195,7 +193,8 @@ export function LearningProfileProvider({ children }) {
     <LearningProfileContext.Provider value={{ 
       learningProfile, 
       recordQuizAttempt,
-      completeCourse
+      completeCourse,
+      updateContentProgress
     }}>
       {children}
     </LearningProfileContext.Provider>
