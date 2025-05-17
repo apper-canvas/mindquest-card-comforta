@@ -77,7 +77,19 @@
   .profile-picture-label {
     @apply text-white text-center;
   }
-  
+
+  .share-dialog-backdrop {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4;
+  }
+
+  .share-dialog {
+    @apply bg-white dark:bg-surface-800 rounded-xl p-6 max-w-md w-full shadow-xl;
+  }
+
+  .share-platform-button {
+    @apply btn btn-outline flex items-center justify-center gap-2 py-3;
+  }
+
   
   
 

@@ -2,72 +2,75 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getIcon } from '../utils/iconUtils';
+import { shareCertificate, generateShareUrl } from '../utils/certificateUtils';
 
 function CertificateCard({ certificate }) {
-  const [isHovered, setIsHovered] = useState(false);
+  const [showShareOptions, setShowShareOptions] = useState(false);
   
   // Get icons
   const AwardIcon = getIcon('Award');
+  const ExternalLinkIcon = getIcon('ExternalLink');
+  const ShareIcon = getIcon('Share2');
   const CalendarIcon = getIcon('Calendar');
   const BookOpenIcon = getIcon('BookOpen');
   const ClockIcon = getIcon('Clock');
-  const EyeIcon = getIcon('Eye');
-  const DownloadIcon = getIcon('Download');
-  const ShareIcon = getIcon('Share2');
+  const CloseIcon = getIcon('X');
   
-  const handleShare = (e) => {
+  // Construct the certificate URL
+  const certificateUrl = `${window.location.origin}/certificate/${certificate.id}`;
+  
+  const handleShare = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // In a real app, this would use the Web Share API
-    toast.info('Sharing functionality would be implemented here!');
+    // Try to use Web Share API first
+    const shared = await shareCertificate(
+      certificate,
+      certificateUrl,
+      (message) => toast.success(message),
+      (error) => toast.error(error)
+    );
+    
+    // If Web Share API is not supported, show platform options
+    if (!shared) {
+      setShowShareOptions(true);
+    }
+  };
+  
+  const handlePlatformShare = (e, platform) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      const shareUrl = generateShareUrl(platform, certificate, certificateUrl);
+      window.open(shareUrl, '_blank', 'noopener,noreferrer');
+      toast.success(`Opening ${platform} to share your certificate!`);
+      setShowShareOptions(false);
+    } catch (error) {
+      toast.error(`Failed to share to ${platform}. Please try again.`);
+    }
   };
   
   return (
-    <Link 
-      to={`/certificate/${certificate.id}`}
-      className="block"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="bg-white dark:bg-surface-800 rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700 shadow-sm hover:shadow-md transition-shadow duration-300">
-        <div className="p-6 relative">
-          <div className="absolute top-4 right-4">
-            <AwardIcon className="w-7 h-7 text-primary" />
+    <Link to={`/certificate/${certificate.id}`} className="card hover:shadow-lg transition-shadow duration-300">
+      <div className="relative p-5">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex items-center text-primary">
+            <AwardIcon className="w-6 h-6 mr-2" />
+            <span className="text-sm font-medium">{certificate.courseCategory}</span>
           </div>
-          
-          <h3 className="font-bold text-xl mb-2 pr-8">{certificate.courseTitle}</h3>
-          
-          <div className="flex items-center gap-1 text-xs text-primary-dark dark:text-primary-light font-medium mb-4">
-            <span className="px-2 py-1 bg-primary/10 rounded-full">
-              {certificate.courseCategory}
-            </span>
-          </div>
-          
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center gap-2 text-surface-600 dark:text-surface-300 text-sm">
-              <CalendarIcon className="w-4 h-4 text-surface-400" />
-              <span>Issued: {certificate.formattedIssueDate}</span>
-            </div>
-            
-            <div className="flex items-center gap-2 text-surface-600 dark:text-surface-300 text-sm">
-              <BookOpenIcon className="w-4 h-4 text-surface-400" />
-              <span>{certificate.modules} modules completed</span>
-            </div>
-            
-            <div className="flex items-center gap-2 text-surface-600 dark:text-surface-300 text-sm">
-              <ClockIcon className="w-4 h-4 text-surface-400" />
-              <span>{certificate.hoursCompleted} hours of training</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2 text-sm">
-            <span className="flex items-center gap-1 text-primary">
-              <EyeIcon className="w-4 h-4" />
-              View Certificate
-            </span>
+          <div className="flex gap-2">
+            <button 
+              onClick={handleShare} 
+              className="p-2 text-surface-500 hover:text-primary rounded-full hover:bg-surface-100 dark:hover:bg-surface-700"
+              aria-label="Share certificate"
+            >
+              <ShareIcon className="w-4 h-4" />
+            </button>
           </div>
         </div>
+        <h3 className="text-lg font-bold mb-3">{certificate.courseTitle}</h3>
+        <p className="text-surface-500 dark:text-surface-400 text-sm mb-3">Issued on {certificate.formattedIssueDate}</p>
       </div>
     </Link>
   );

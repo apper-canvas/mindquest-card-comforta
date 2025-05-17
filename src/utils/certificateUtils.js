@@ -132,3 +132,79 @@ export async function exportCertificateAsPdf(element, filename = 'certificate.pd
   pdf.addImage(imgData, 'PNG', 0, 0, 297, 210); // A4 size
   pdf.save(filename);
 }
+
+/**
+ * Generate social share URL for various platforms
+ * 
+ * @param {String} platform - The social platform (facebook, twitter, linkedin, etc.)
+ * @param {Object} certificate - Certificate data
+ * @param {String} shareUrl - URL to share
+ * @returns {String} The social share URL
+ */
+export function generateShareUrl(platform, certificate, shareUrl) {
+  const text = `I earned a certificate in ${certificate.courseTitle} from MindQuest!`;
+  const encodedUrl = encodeURIComponent(shareUrl);
+  const encodedText = encodeURIComponent(text);
+  
+  switch (platform.toLowerCase()) {
+    case 'facebook':
+      return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+    case 'twitter':
+      return `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+    case 'linkedin':
+      return `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+    case 'whatsapp':
+      return `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
+    case 'telegram':
+      return `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
+    case 'email':
+      const subject = encodeURIComponent(`My MindQuest Certificate: ${certificate.courseTitle}`);
+      const body = encodeURIComponent(`Hi,\n\nI'm excited to share that I earned a certificate in ${certificate.courseTitle} from MindQuest!\n\nView my certificate here: ${shareUrl}\n\nCertificate ID: ${certificate.certificateNumber}\nIssued on: ${certificate.formattedIssueDate}`);
+      return `mailto:?subject=${subject}&body=${body}`;
+    default:
+      return shareUrl;
+  }
+}
+
+/**
+ * Generate text content for sharing certificate
+ * 
+ * @param {Object} certificate - The certificate data
+ * @returns {String} Formatted text for sharing
+ */
+export function generateShareText(certificate) {
+  return `I earned a certificate in ${certificate.courseTitle} from MindQuest! Issued on ${certificate.formattedIssueDate}. Certificate ID: ${certificate.certificateNumber}`;
+}
+
+/**
+ * Share certificate using Web Share API or fallback methods
+ * 
+ * @param {Object} certificate - Certificate data
+ * @param {String} certificateUrl - URL to the certificate
+ * @param {Function} onSuccess - Success callback
+ * @param {Function} onError - Error callback
+ * @returns {Promise<boolean>} Success status
+ */
+export async function shareCertificate(certificate, certificateUrl, onSuccess, onError) {
+  try {
+    const shareData = {
+      title: `MindQuest Certificate: ${certificate.courseTitle}`,
+      text: generateShareText(certificate),
+      url: certificateUrl
+    };
+
+    // Check if Web Share API is supported
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      await navigator.share(shareData);
+      if (onSuccess) onSuccess('Certificate shared successfully!');
+      return true;
+    } else {
+      // Web Share API not supported - fallback handled by UI
+      return false;
+    }
+  } catch (error) {
+    console.error('Error sharing certificate:', error);
+    if (onError) onError('Failed to share certificate. Please try again.');
+    return false;
+  }
+}
