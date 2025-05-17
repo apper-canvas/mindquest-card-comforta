@@ -14,6 +14,7 @@ import Certificate from './pages/Certificate';
 import CourseContent from './pages/CourseContent';
 import Certificates from './pages/Certificates';
 
+import LearningMaterials from './pages/LearningMaterials';
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
@@ -139,6 +140,7 @@ function App() {
           } />
           <Route path="/certificate/:id" element={currentUser ? <Certificate /> : <Navigate to="/login" replace />} />
           <Route path="/certificates" element={currentUser ? <Certificates /> : <Navigate to="/login" replace />} />
+          <Route path="/learning" element={currentUser ? <LearningMaterials /> : <Navigate to="/login" state={{ from: location }} replace />} />
           <Route path="/course/:id" element={currentUser ? <CourseContent /> : <Navigate to="/login" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
