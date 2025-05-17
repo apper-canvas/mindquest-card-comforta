@@ -667,6 +667,5 @@ function MainFeature() {
     </div>
   );
 }
-  
 
 export default MainFeature;
