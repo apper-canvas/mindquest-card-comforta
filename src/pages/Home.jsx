@@ -265,7 +265,7 @@ function Home() {
                     ) : (
                       <div className="mt-4 flex gap-2">
                         <Link
-                          to={`/course/${course.id}`}
+                          to="/learning"
                           className="flex-1 py-2 px-4 bg-primary-light dark:bg-primary-dark text-primary dark:text-primary-light rounded-lg 
                                     border border-primary/20 transition-colors duration-300 flex items-center justify-center gap-2"
                         >
