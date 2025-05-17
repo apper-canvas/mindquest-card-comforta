@@ -1,18 +1,31 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { getIcon } from '../utils/iconUtils';
+import { getIcon } from '../utils/iconUtils'; 
 import { useAuth } from '../context/AuthContext';
 import { useLearningProfile } from '../context/LearningProfileContext';
+import { validateProfileData } from '../utils/authUtils';
 
 function Profile() {
-  const { currentUser } = useAuth();
+  const { currentUser, updateProfile } = useAuth();
   const { learningProfile } = useLearningProfile();
   const [isEditMode, setIsEditMode] = useState(false);
+    displayName: '',
+    email: '',
+    bio: 'I love learning new things on MindQuest!',
+    preferences: {
+      emailNotifications: true,
+      darkMode: document.documentElement.classList.contains('dark')
+    }
+  });
+  
   const [profileData, setProfileData] = useState({
     displayName: '',
     email: '',
     bio: 'I love learning new things on MindQuest!',
+    location: '',
+    occupation: '',
+    interests: '',
     preferences: {
       emailNotifications: true,
       darkMode: document.documentElement.classList.contains('dark')
@@ -37,6 +50,11 @@ function Profile() {
   const BrainIcon = getIcon('Brain');
   const ClockIcon = getIcon('Clock');
   const StarIcon = getIcon('Star');
+  const MapPinIcon = getIcon('MapPin');
+  const BriefcaseIcon = getIcon('Briefcase');
+  const HeartIcon = getIcon('Heart');
+  const CameraIcon = getIcon('Camera');
+  const ImageIcon = getIcon('Image');
 
   // Set initial profile data from current user
   useEffect(() => {
@@ -44,7 +62,11 @@ function Profile() {
       setProfileData(prev => ({
         ...prev,
         displayName: currentUser.displayName,
-        email: currentUser.email
+        email: currentUser.email,
+        bio: currentUser.bio || prev.bio,
+        location: currentUser.location || '',
+        occupation: currentUser.occupation || '',
+        interests: currentUser.interests || ''
       }));
     }
   }, [currentUser]);
@@ -70,6 +92,14 @@ function Profile() {
     });
   }, [learningProfile]);
 
+  // File upload state
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [fileError, setFileError] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+  const fileInputRef = {};
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
@@ -91,11 +121,52 @@ function Profile() {
       }));
     }
   };
+  
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setFileError('');
+    
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.match('image.*')) {
+      setFileError('Please select an image file (JPG, PNG, GIF)');
+      return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setFileError('Image size should not exceed 5MB');
+      return;
+    }
+    
+    setSelectedFile(file);
+    
+    // Create preview URL
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // In a real application, this would update the user's profile in the database
-    setIsEditMode(false);
-    toast.success('Profile updated successfully!');
+    const validation = validateProfileData(profileData);
+    
+    if (!validation.isValid) {
+      setFormErrors(validation.errors);
+      toast.error('Please fix the errors in your profile data');
+      return;
+    }
+    
+    try {
+      await updateProfile(profileData, selectedFile);
+      setIsEditMode(false);
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      toast.error('Failed to update profile: ' + error.message);
+    }
   };
 
   return (
@@ -138,14 +209,41 @@ function Profile() {
           <div className="flex flex-col md:flex-row gap-8">
             <div className="md:w-1/3">
               <div className="flex flex-col items-center">
-                <div className="w-32 h-32 rounded-full overflow-hidden mb-4 border-2 border-primary">
-                  <img 
-                    src={currentUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.displayName)}&background=6366f1&color=fff&size=128`} 
-                    alt={profileData.displayName}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
+                {isEditMode ? (
+                  <div className="w-32 h-32 rounded-full overflow-hidden mb-4 border-2 border-primary relative group">
+                    <img 
+                      src={previewUrl || currentUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.displayName)}&background=6366f1&color=fff&size=128`} 
+                      alt={profileData.displayName}
+                      className="w-full h-full object-cover"
+                    />
+                    <div 
+                      className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      onClick={() => document.getElementById('profilePicture').click()}
+                    >
+                      <div className="text-white text-center">
+                        <CameraIcon className="w-8 h-8 mx-auto mb-1" />
+                        <span className="text-xs">Change Photo</span>
+                      </div>
+                    </div>
+                    <input 
+                      type="file" 
+                      id="profilePicture" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleFileChange}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-32 h-32 rounded-full overflow-hidden mb-4 border-2 border-primary">
+                    <img 
+                      src={currentUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.displayName)}&background=6366f1&color=fff&size=128`} 
+                      alt={profileData.displayName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                {fileError && <p className="text-red-500 text-sm mb-4">{fileError}</p>}
+
                 {isEditMode ? (
                   <div className="w-full space-y-4">
                     <div>
@@ -157,6 +255,7 @@ function Profile() {
                         value={profileData.displayName} 
                         onChange={handleChange}
                         className="form-input" 
+                        required
                       />
                     </div>
                     <div>
@@ -169,6 +268,43 @@ function Profile() {
                         rows={4}
                         className="form-input" 
                       />
+                    </div>
+                    <div>
+                      <label htmlFor="location" className="form-label">Location</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-500">
+                          <MapPinIcon className="w-5 h-5" />
+                        </div>
+                        <input 
+                          type="text" 
+                          id="location" 
+                          name="location" 
+                          value={profileData.location} 
+                          onChange={handleChange}
+                          className="form-input pl-10" 
+                          placeholder="City, Country"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="occupation" className="form-label">Occupation</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-500">
+                          <BriefcaseIcon className="w-5 h-5" />
+                        </div>
+                        <input 
+                          type="text" 
+                          id="occupation" 
+                          name="occupation" 
+                          value={profileData.occupation} 
+                          onChange={handleChange}
+                          className="form-input pl-10" 
+                          placeholder="Your occupation"
+                        />
+                      </div>
+                      {formErrors.occupation && (
+                        <p className="text-red-500 text-sm mt-1">{formErrors.occupation}</p>
+                      )}
                     </div>
                     <div className="flex items-center">
                       <input 
@@ -183,11 +319,30 @@ function Profile() {
                         Receive email notifications
                       </label>
                     </div>
+                    <div>
+                      <label htmlFor="interests" className="form-label">Interests</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-500">
+                          <HeartIcon className="w-5 h-5" />
+                        </div>
+                        <input 
+                          type="text" 
+                          id="interests" 
+                          name="interests" 
+                          value={profileData.interests} 
+                          onChange={handleChange}
+                          className="form-input pl-10" 
+                          placeholder="Coding, learning, etc."
+                        />
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center">
                     <h2 className="text-xl font-bold mb-2">{profileData.displayName}</h2>
                     <p className="text-surface-600 dark:text-surface-400 text-sm mb-4">{profileData.email}</p>
+                    {profileData.location && <p className="text-surface-600 dark:text-surface-400 text-sm mb-2"><MapPinIcon className="inline w-4 h-4 mr-1" />{profileData.location}</p>}
+                    {profileData.occupation && <p className="text-surface-600 dark:text-surface-400 text-sm mb-2"><BriefcaseIcon className="inline w-4 h-4 mr-1" />{profileData.occupation}</p>}
                     <p className="text-surface-700 dark:text-surface-300">{profileData.bio}</p>
                   </div>
                 )}
@@ -249,6 +404,24 @@ function Profile() {
                   <p className="text-xl font-bold">{stats.totalExperience} XP</p>
                 </div>
               </div>
+              
+              {!isEditMode && profileData.interests && (
+                <div className="mt-6">
+                  <h2 className="text-xl font-bold mb-4">Interests</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {profileData.interests.split(',').map((interest, index) => (
+                      interest.trim() && (
+                        <span 
+                          key={index} 
+                          className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm"
+                        >
+                          {interest.trim()}
+                        </span>
+                      )
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import { fileToBase64 } from '../utils/authUtils';
 
 // Create the auth context
 const AuthContext = createContext();
@@ -34,7 +35,11 @@ export function AuthProvider({ children }) {
         email: 'demo@example.com',
         password: 'Password123',
         displayName: 'Demo User',
-        photoURL: 'https://ui-avatars.com/api/?name=Demo+User&background=6366f1&color=fff'
+        photoURL: 'https://ui-avatars.com/api/?name=Demo+User&background=6366f1&color=fff',
+        bio: 'I love learning new things on MindQuest!',
+        location: 'San Francisco, CA',
+        occupation: 'Software Developer',
+        interests: 'Coding, AI, Machine Learning'
       }
     ];
   });
@@ -126,8 +131,54 @@ export function AuthProvider({ children }) {
     }
   };
 
+  /**
+   * Update user profile information
+   * @param {object} profileData - The updated profile data
+   * @param {File} profilePicture - Optional new profile picture file
+   */
+  const updateProfile = async (profileData, profilePicture = null) => {
+    try {
+      if (!currentUser) {
+        throw new Error('You must be logged in to update your profile');
+      }
+
+      let photoURL = currentUser.photoURL;
+
+      // Process profile picture if provided
+      if (profilePicture) {
+        // In a real app with Firebase, we would upload this to storage
+        // For our mock implementation, we'll convert to base64
+        photoURL = await fileToBase64(profilePicture);
+      }
+
+      // Create updated user object
+      const updatedUser = {
+        ...currentUser,
+        displayName: profileData.displayName,
+        bio: profileData.bio,
+        location: profileData.location,
+        occupation: profileData.occupation,
+        interests: profileData.interests,
+        photoURL
+      };
+
+      // Update in users array
+      setUsers(prevUsers => prevUsers.map(user => 
+        user.uid === currentUser.uid ? updatedUser : user
+      ));
+
+      // Update current user
+      setCurrentUser(updatedUser);
+      localStorage.setItem('mindquest_user', JSON.stringify(updatedUser));
+      return updatedUser;
+    } catch (err) {
+      toast.error(err.message);
+      throw err;
+    }
+  };
+
   const value = {
-    currentUser, loading, error, register, login, logout, resetPassword
+    currentUser, loading, error, register, login, logout, resetPassword, updateProfile
   };
 
   return (

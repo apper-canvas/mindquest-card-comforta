@@ -64,6 +64,21 @@
     @apply block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1;
   }
   
+  .profile-picture-upload {
+    @apply relative cursor-pointer w-32 h-32 rounded-full overflow-hidden
+           border-2 border-primary flex items-center justify-center;
+  }
+  
+  .profile-picture-overlay {
+    @apply absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center
+           opacity-0 hover:opacity-100 transition-opacity;
+  }
+  
+  .profile-picture-label {
+    @apply text-white text-center;
+  }
+  
+  
   
 
   .card {
