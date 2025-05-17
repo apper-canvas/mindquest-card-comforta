@@ -107,7 +107,7 @@ function MainFeature() {
   const [quizAnalysis, setQuizAnalysis] = useState(null);
   
   // Use ref to store quiz state values that shouldn't trigger re-renders
-  const quizStateRef = useRef({
+  const quizStateRef = useRef({ 
     quizStarted: false,
     quizCompleted: false,
     timeLeft: null,
@@ -294,11 +294,10 @@ function MainFeature() {
   const backToResults = () => {
     setShowAdaptiveContent(false);
     // Update ref
-    quizStateRef.current.showAdaptiveContent = false;
-  };
-  
-  const handleBackToResults = () => {
-    setShowAdaptiveContent(false);
+    quizStateRef.current = {
+      ...quizStateRef.current,
+      showAdaptiveContent: false
+    };
   };
   
   // Component for quiz selection
