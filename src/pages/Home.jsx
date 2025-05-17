@@ -264,24 +264,24 @@ function Home() {
                       </div>
                     ) : (
                       <div className="mt-4 flex gap-2">
-                        <Link
-                          to="/learning"
-                          className="flex-1 py-2 px-4 bg-primary-light dark:bg-primary-dark text-primary dark:text-primary-light rounded-lg 
-                                    border border-primary/20 transition-colors duration-300 flex items-center justify-center gap-2"
-                        >
-                          <BookIcon className="w-4 h-4" />
-                          View Materials
-                        </Link>
-                        <button
-                          onClick={() => handleCompleteCourse(course)}
-                          className="flex-1 py-2 px-4 bg-primary hover:bg-primary-dark text-white rounded-lg 
-                                    transition-colors duration-300 flex items-center justify-center gap-2"
-                          title="Skip learning materials and complete course directly"
-                          aria-label="Complete course and get certificate without studying materials"
-                          
-                        >
-                          Complete Course & Get Certificate
-                        </button>
+                        <Link 
+                          to="/learning" 
+                          className="flex-1 min-w-0 py-2 px-2 sm:px-3 bg-primary-light dark:bg-primary-dark text-primary dark:text-primary-light rounded-lg 
+                                   border border-primary/20 transition-colors duration-300 flex items-center justify-center gap-1 text-xs sm:text-sm whitespace-nowrap"
+                         >
+                           <BookIcon className="w-4 h-4 flex-shrink-0" />
+                           <span className="truncate">View Materials</span>
+                         </Link>
+                         <button
+                           onClick={() => handleCompleteCourse(course)}
+                           className="flex-1 min-w-0 py-2 px-2 sm:px-3 bg-primary hover:bg-primary-dark text-white rounded-lg 
+                                    transition-colors duration-300 flex items-center justify-center gap-1 text-xs sm:text-sm whitespace-nowrap"
+                           title="Skip learning materials and complete course directly"
+                           aria-label="Complete course and get certificate without studying materials"
+                         >
+                           <span className="truncate">Complete Course</span>
+                           <AwardIcon className="w-4 h-4 flex-shrink-0" />
+                         </button>
                       </div>
                     )}
                   </div>
