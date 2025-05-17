@@ -236,7 +236,6 @@ function App() {
       </LearningProfileProvider>
     </AuthContext.Provider>
   );
-  );
 }
 
 export default App;
