@@ -149,56 +149,58 @@ function Home() {
           <div>
             <h2 className="text-2xl md:text-3xl font-bold">Explore Popular Courses</h2>
             
-          <div className="flex flex-col sm:flex-row gap-3">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <LoaderIcon className="w-10 h-10 animate-spin text-primary" />
-          </div>
-        ) : error ? (
-          <div className="text-center py-10">
-            <p className="text-red-500 mb-4">{error}</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="btn btn-primary"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : (
-        <>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search courses..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 focus:ring-2 focus:ring-primary focus:border-primary"
-              />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-surface-400">
-                <SearchIcon className="w-5 h-5" />
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2 bg-white dark:bg-surface-800 p-2 rounded-lg border border-surface-200 dark:border-surface-700">
-              <FilterIcon className="w-5 h-5 text-surface-500" />
-                  <span className="text-sm font-medium mr-2">Filter:</span>
-                  <div className="flex gap-1">
-                    {['all', 'programming', 'languages', 'mathematics'].map(filter => (
-                      <button
-                        key={filter}
-                        onClick={() => setActiveFilter(filter)}
-                        className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                          activeFilter === filter 
-                            ? 'bg-primary text-white' 
-                            : 'bg-surface-100 dark:bg-surface-700 hover:bg-surface-200 dark:hover:bg-surface-600'
-                        }`}
-                      >
-                        {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                      </button>
-                    ))}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {isLoading ? (
+                <div className="flex justify-center items-center py-20">
+                  <LoaderIcon className="w-10 h-10 animate-spin text-primary" />
+                </div>
+              ) : error ? (
+                <div className="text-center py-10">
+                  <p className="text-red-500 mb-4">{error}</p>
+                  <button 
+                    onClick={() => window.location.reload()}
+                    className="btn btn-primary"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : (
+              <>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search courses..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 focus:ring-2 focus:ring-primary focus:border-primary"
+                  />
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-surface-400">
+                    <SearchIcon className="w-5 h-5" />
                   </div>
                 </div>
-          </div>
+                
+                <div className="flex items-center gap-2 bg-white dark:bg-surface-800 p-2 rounded-lg border border-surface-200 dark:border-surface-700">
+                  <FilterIcon className="w-5 h-5 text-surface-500" />
+                      <span className="text-sm font-medium mr-2">Filter:</span>
+                      <div className="flex gap-1">
+                        {['all', 'programming', 'languages', 'mathematics'].map(filter => (
+                          <button
+                            key={filter}
+                            onClick={() => setActiveFilter(filter)}
+                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                              activeFilter === filter 
+                                ? 'bg-primary text-white' 
+                                : 'bg-surface-100 dark:bg-surface-700 hover:bg-surface-200 dark:hover:bg-surface-600'
+                            }`}
+                          >
+                            {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                </div>
+              </>
+              )}
+              </div>
           </div>
           )}
         </div>
