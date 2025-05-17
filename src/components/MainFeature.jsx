@@ -648,11 +648,10 @@ function MainFeature() {
                 </Link>
               </div>
             </div>
-          )}
-        </div>
-        )}
-          )}
-      </motion.div>
+          )
+        }
+      </div>
+    </motion.div>
     );
   };
   
