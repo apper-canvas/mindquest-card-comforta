@@ -223,7 +223,7 @@ function CourseContent() {
           <span className="font-bold">Certificate generated and added to your profile.</span>
         </>
       );
-      navigate('/certificates');
+      navigate('/learning');
     }
   };
   
