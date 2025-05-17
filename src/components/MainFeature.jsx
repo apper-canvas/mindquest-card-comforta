@@ -297,7 +297,7 @@ function MainFeature() {
     quizStateRef.current.showAdaptiveContent = false;
   };
   
-  const backToResults = () => {
+  const handleBackToResults = () => {
     setShowAdaptiveContent(false);
   };
   
