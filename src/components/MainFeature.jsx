@@ -646,16 +646,16 @@ function MainFeature() {
                     quizStateRef.current.showAdaptiveContent = false;
                   }} 
                   className="btn btn-outline flex items-center justify-center gap-2">
-                  <RotateCcwIcon className="w-4 h-4" /> Back to Results
-                </button>
-                <Link to={`/course/${selectedQuiz.id === 1 ? 1 : selectedQuiz.id === 2 ? 2 : 3}`}
-                  className="btn btn-primary flex items-center justify-center gap-2">
-                  <BookIcon className="w-4 h-4" /> View Learning Materials
-                </Link>
+                    <RotateCcwIcon className="w-4 h-4" /> Back to Results
+                  </button>
+                  <Link to={`/course/${selectedQuiz.id === 1 ? 1 : selectedQuiz.id === 2 ? 2 : 3}`}
+                    className="btn btn-primary flex items-center justify-center gap-2">
+                    <BookIcon className="w-4 h-4" /> View Learning Materials
+                  </Link>
+              </div>
             </div>
-          </div>
-        )}
-      </motion.div>
+          )}
+        </motion.div>
   };
   
   // Render the appropriate component based on the quiz state
