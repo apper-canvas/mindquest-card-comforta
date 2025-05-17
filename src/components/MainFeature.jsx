@@ -645,14 +645,14 @@ function MainFeature() {
                     setShowAdaptiveContent(false);
                     quizStateRef.current.showAdaptiveContent = false;
                   }} 
-                  className="btn btn-outline">Back to Results</button>
+                  </Link>
                 <Link to={`/course/${selectedQuiz.id === 1 ? 1 : selectedQuiz.id === 2 ? 2 : 3}`}
                   className="btn btn-primary flex items-center justify-center gap-2">
-                  <BookIcon className="w-4 h-4" /> Access Learning Materials
-                </Link>
-              </div>
             </div>
-        )
+          )}
+        </motion.div>
+            </div>
+    </div>
       </motion.div>
     );
     );
