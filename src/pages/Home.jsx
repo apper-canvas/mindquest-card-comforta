@@ -16,7 +16,8 @@ const popularCourses = [
     enrolled: 12500,
     image: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
     modules: 8,
-    duration: "12 hours"
+    duration: "12 hours",
+    completed: false
   },
   {
     id: 2,
@@ -27,7 +28,8 @@ const popularCourses = [
     enrolled: 8300,
     image: "https://images.unsplash.com/photo-1551649779-a3aa7bd7edb1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
     modules: 10,
-    duration: "15 hours"
+    duration: "15 hours",
+    completed: false
   },
   {
     id: 3,
@@ -38,7 +40,8 @@ const popularCourses = [
     enrolled: 5200,
     image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
     modules: 12,
-    duration: "20 hours"
+    duration: "20 hours",
+    completed: false
   },
   {
     id: 4,
@@ -49,12 +52,13 @@ const popularCourses = [
     enrolled: 14200,
     image: "https://images.unsplash.com/photo-1547658719-da2b51169166?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
     modules: 15,
-    duration: "30 hours"
+    duration: "30 hours",
+    completed: false
   }
 ];
 
 function Home() {
-  const { learningProfile } = useLearningProfile();
+  const { learningProfile, completeCourse } = useLearningProfile();
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showLearningPath, setShowLearningPath] = useState(false);
@@ -66,6 +70,7 @@ function Home() {
   const BookOpenIcon = getIcon('BookOpen');
   const SearchIcon = getIcon('Search');
   const FilterIcon = getIcon('Filter');
+  const AwardIcon = getIcon('Award');
   const TrendingUpIcon = getIcon('TrendingUp');
   
   const filteredCourses = popularCourses.filter(course => {
@@ -82,6 +87,20 @@ function Home() {
   
   const handleEnrollCourse = (courseId) => {
     toast.success(`Successfully enrolled in course! Your learning journey begins now.`);
+    // In a real app, we would update the database here
+  };
+  
+  const handleCompleteCourse = (course) => {
+    // In a real app, we would verify completion requirements
+    const success = completeCourse(course);
+    
+    if (success) {
+      toast.success(
+        <>
+          <span>Congratulations! You've completed {course.title}. </span>
+          <span className="font-bold">Certificate generated and added to your profile.</span>
+        </>);
+    }
   };
   
   // Get recommended courses based on user's learning profile
@@ -178,6 +197,11 @@ function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredCourses.length > 0 ? (
             filteredCourses.map(course => (
+              // Check if the course is in completedCourses
+              (() => {
+                const isCompleted = learningProfile.completedCourses &&
+                  learningProfile.completedCourses.some(c => c.id === course.id);
+                return (
               <div 
                 key={course.id} 
                 className="card overflow-hidden group hover:shadow-lg transition-shadow duration-300"
@@ -193,9 +217,14 @@ function Home() {
                     {course.rating}
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                    <span className="text-xs font-semibold text-white px-2 py-1 rounded-full bg-primary/80">
-                      {course.level}
-                    </span>
+                    <div className="flex gap-2">
+                      <span className="text-xs font-semibold text-white px-2 py-1 rounded-full bg-primary/80">
+                        {course.level}
+                      </span>
+                      {isCompleted && (
+                        <span className="text-xs font-semibold text-white px-2 py-1 rounded-full bg-green-500/80 flex items-center gap-1"><AwardIcon className="w-3 h-3" /> Completed</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
@@ -219,15 +248,31 @@ function Home() {
                       <span>{course.duration}</span>
                     </div>
                   </div>
-                  
-                  <button
-                    onClick={() => handleEnrollCourse(course.id)}
-                    className="mt-4 w-full py-2 px-4 bg-primary hover:bg-primary-dark text-white rounded-lg 
-                              transition-colors duration-300 flex items-center justify-center gap-2"
-                  >
-                    Enroll Now
-                  </button>
+
+                  {isCompleted ? (
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => window.location.href = `/certificate/${learningProfile.certificates.find(cert => cert.courseId === course.id)?.id}`}
+                        className="flex-1 py-2 px-4 bg-secondary hover:bg-secondary-dark text-white rounded-lg 
+                                  transition-colors duration-300 flex items-center justify-center gap-2"
+                      >
+                        <AwardIcon className="w-4 h-4" />
+                        View Certificate
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => handleCompleteCourse(course)}
+                        className="w-full py-2 px-4 bg-primary hover:bg-primary-dark text-white rounded-lg 
+                                  transition-colors duration-300 flex items-center justify-center gap-2"
+                      >
+                        Complete Course & Get Certificate
+                      </button>
+                    </div>
+                  )}
                 </div>
+              </div>)})()
               </div>
             ))
           ) : (

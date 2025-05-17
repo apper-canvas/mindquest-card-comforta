@@ -10,6 +10,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import Profile from './pages/Profile';
+import Certificate from './pages/Certificate';
+import Certificates from './pages/Certificates';
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -45,6 +47,7 @@ function App() {
   const MoonIcon = getIcon('Moon');
   const UserIcon = getIcon('User');
   const MenuIcon = getIcon('Menu');
+  const AwardIcon = getIcon('Award');
   return (
     <LearningProfileProvider>
     <div className="min-h-screen">
@@ -68,6 +71,9 @@ function App() {
                 <>
                   <Link to="/profile" className="text-surface-700 dark:text-surface-300 hover:text-primary dark:hover:text-primary transition-colors">
                     Profile
+                  </Link>
+                  <Link to="/certificates" className="text-surface-700 dark:text-surface-300 hover:text-primary dark:hover:text-primary transition-colors">
+                    Certificates
                   </Link>
                   <button onClick={handleLogout} className="text-surface-700 dark:text-surface-300 hover:text-primary dark:hover:text-primary transition-colors">
                     Logout
@@ -102,6 +108,7 @@ function App() {
                   {currentUser ? (
                     <>
                       <Link to="/profile" className="block px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 w-full text-left">Profile</Link>
+                      <Link to="/certificates" className="block px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 w-full text-left">Certificates</Link>
                       <button onClick={handleLogout} className="block px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 w-full text-left">Logout</button>
                     </>
                   ) : (
@@ -124,6 +131,8 @@ function App() {
             <Navigate to="/login" state={{ from: location }} replace /> : 
             <Profile />
           } />
+          <Route path="/certificate/:id" element={currentUser ? <Certificate /> : <Navigate to="/login" replace />} />
+          <Route path="/certificates" element={currentUser ? <Certificates /> : <Navigate to="/login" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

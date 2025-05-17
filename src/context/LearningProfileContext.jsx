@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { calculateProficiencyScore, determineDifficultyLevel } from '../utils/adaptiveLearningUtils';
-
+import { generateCertificate, saveCertificate } from '../utils/certificateUtils';
+import { useAuth } from './AuthContext';
 // Create context
 const LearningProfileContext = createContext();
 
@@ -31,11 +32,13 @@ const initialLearningProfile = {
   preferences: {
     learningPace: 'moderate',
     showRecommendations: true
-  }
+  },
+  completedCourses: [],
+  certificates: []
 };
 
 export function LearningProfileProvider({ children }) {
-  // Try to load learning profile from localStorage
+  const { currentUser } = useAuth() || { currentUser: null };
   const [learningProfile, setLearningProfile] = useState(() => {
     const savedProfile = localStorage.getItem('learningProfile');
     return savedProfile ? JSON.parse(savedProfile) : initialLearningProfile;
@@ -45,6 +48,49 @@ export function LearningProfileProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('learningProfile', JSON.stringify(learningProfile));
   }, [learningProfile]);
+
+  /**
+   * Mark a course as completed and generate a certificate
+   * 
+   * @param {Object} course - The course data
+   * @returns {Object} The generated certificate data
+   */
+  const completeCourse = (course) => {
+    if (!course) return null;
+    
+    // Check if course is already completed
+    if (learningProfile.completedCourses.some(c => c.id === course.id)) {
+      toast.info("You've already completed this course!");
+      return null;
+    }
+    
+    setLearningProfile(prevProfile => {
+      // Mark course as completed
+      const completedCourse = {
+        ...course,
+        completionDate: new Date().toISOString()
+      };
+      
+      // Generate certificate data
+      const certificateData = generateCertificate({
+        course,
+        user: currentUser,
+        completionDate: new Date().toISOString(),
+        id: `cert-${Date.now()}-${course.id}`
+      });
+      
+      // Save the certificate and return updated profile
+      saveCertificate(certificateData);
+      
+      return {
+        ...prevProfile,
+        completedCourses: [...prevProfile.completedCourses, completedCourse],
+        certificates: [...prevProfile.certificates, certificateData]
+      };
+    });
+    
+    return true;
+  };
   
   /**
    * Record a completed quiz and update the learning profile
@@ -119,7 +165,8 @@ export function LearningProfileProvider({ children }) {
   return (
     <LearningProfileContext.Provider value={{ 
       learningProfile, 
-      recordQuizAttempt 
+      recordQuizAttempt,
+      completeCourse
     }}>
       {children}
     </LearningProfileContext.Provider>
