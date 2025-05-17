@@ -146,7 +146,7 @@ function Home() {
           {Object.values(learningProfile.subjects).some(subject => subject.quizAttempts.length > 0) ? (
             <h2 className="text-2xl md:text-3xl font-bold">Recommended For You</h2>
           ) : (
-          <>
+          <div>
             <h2 className="text-2xl md:text-3xl font-bold">Explore Popular Courses</h2>
             
           <div className="flex flex-col sm:flex-row gap-3">
@@ -169,27 +169,18 @@ function Home() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search courses..."
-            <>
-              <h2 className="text-2xl md:text-3xl font-bold">Explore Popular Courses</h2>
-              
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search courses..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-surface-200 dark:border-surface-700 
-                              bg-white dark:bg-surface-800 focus:ring-2 focus:ring-primary focus:border-primary"
-                  />
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-surface-400">
-                    <SearchIcon className="w-5 h-5" />
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 bg-white dark:bg-surface-800 p-2 rounded-lg border border-surface-200 dark:border-surface-700">
-                  <FilterIcon className="w-5 h-5 text-surface-500" />
+                placeholder="Search courses..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 w-full rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-surface-400">
+                <SearchIcon className="w-5 h-5" />
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-white dark:bg-surface-800 p-2 rounded-lg border border-surface-200 dark:border-surface-700">
+              <FilterIcon className="w-5 h-5 text-surface-500" />
                   <span className="text-sm font-medium mr-2">Filter:</span>
                   <div className="flex gap-1">
                     {['all', 'programming', 'languages', 'mathematics'].map(filter => (
@@ -207,20 +198,42 @@ function Home() {
                     ))}
                   </div>
                 </div>
-                  <button
-            </>
-                learningProfile.completedCourses.some(c => c.id === course.id);
-              
-              return (
-                <div 
-                  key={course.id} 
-                  className="card overflow-hidden group hover:shadow-lg transition-shadow duration-300"
+          </div>
+          </div>
+          )}
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          {isLoading ? (
+            <div className="col-span-full flex justify-center items-center py-20">
+              <LoaderIcon className="w-10 h-10 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <div className="col-span-full text-center py-10">
+              <p className="text-red-500 mb-4">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="btn btn-primary"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : filteredCourses.length > 0 ? (
+            filteredCourses.map(course => {
               // Check if the course is completed
               const isCompleted = completedCourseIds.includes(course.Id);
+                
+              return (
+                <div 
+                  key={course.Id} 
+                  className="card overflow-hidden group hover:shadow-lg transition-shadow duration-300"
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
                       src={course.image} 
                       alt={course.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  key={course.Id} 
+                    />
                     <div className="absolute top-3 right-3 bg-white dark:bg-surface-800 rounded-full px-2 py-1 text-xs font-medium flex items-center gap-1">
                       <StarIcon className="w-3 h-3 text-accent" />
                       {course.rating}
@@ -266,10 +279,10 @@ function Home() {
                                     transition-colors duration-300 flex items-center justify-center gap-2"
                         >
                           <AwardIcon className="w-4 h-4" />
-                          View Certificate
+                           View Certificate
                         </button>
                       </div>
-                          onClick={() => navigate(`/certificates`)}
+                    ) : (
                       <div className="mt-4 flex gap-2">
                         <Link 
                           to="/learning" 
@@ -307,7 +320,4 @@ function Home() {
     </div>
   );
 }
-
 export default Home;
-        </>
-        )}
