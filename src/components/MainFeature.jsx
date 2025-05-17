@@ -587,7 +587,7 @@ function MainFeature() {
                     className="btn btn-primary flex items-center justify-center gap-2"
                   >
                     <BookIcon className="w-4 h-4" /> Study Materials
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
