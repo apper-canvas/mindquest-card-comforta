@@ -59,7 +59,7 @@ export function LearningProfileProvider({ children }) {
     if (!course) return null;
     
     // Check if course is already completed
-    if (learningProfile.completedCourses.some(c => c.id === course.id)) {
+    if ((learningProfile.completedCourses || []).some(c => c.id === course.id)) {
       toast.info("You've already completed this course!");
       return null;
     }
@@ -84,8 +84,8 @@ export function LearningProfileProvider({ children }) {
       
       return {
         ...prevProfile,
-        completedCourses: [...prevProfile.completedCourses, completedCourse],
-        certificates: [...prevProfile.certificates, certificateData]
+        completedCourses: [...(prevProfile.completedCourses || []), completedCourse],
+        certificates: [...(prevProfile.certificates || []), certificateData]
       };
     });
     
