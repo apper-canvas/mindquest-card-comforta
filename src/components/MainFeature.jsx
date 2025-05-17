@@ -443,13 +443,15 @@ function MainFeature() {
         transition={{ duration: 0.5 }}
         className="max-w-2xl mx-auto"
       >
-        {!viewingResults && !showAdaptiveContent ? (
+        {!viewingResults && !showAdaptiveContent ? 
+        (
           <div className="card p-8 text-center">
             <div className="mb-6 flex justify-center">
               {resultIcon}
             </div>
             
             <h3 className="text-2xl font-bold mb-2">Quiz Completed!</h3>
+            
             <p className="text-surface-600 dark:text-surface-300 mb-6">{resultMessage}</p>
             
             <div className="flex justify-center mb-8">
@@ -518,9 +520,10 @@ function MainFeature() {
               </button>
             </div>
           </div>
-        ) : (
-          showAdaptiveContent ? (
-            <div className="card p-6">
+        ) : 
+        showAdaptiveContent ? 
+        (
+          <div className="card p-6">
               <div>
                 <h3 className="text-xl font-bold">
                   {selectedQuiz.title} - Detailed Results</h3>
@@ -591,8 +594,9 @@ function MainFeature() {
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="card p-6">
+        ) : 
+        (
+          <div className="card p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold flex items-center gap-2">
                   <TrendingUpIcon className="w-5 h-5 text-primary" />
@@ -648,10 +652,9 @@ function MainFeature() {
                 </Link>
               </div>
             </div>
-          )
-        }
-      </div>
-    </motion.div>
+        )
+      </motion.div>
+    );
     );
   };
   
