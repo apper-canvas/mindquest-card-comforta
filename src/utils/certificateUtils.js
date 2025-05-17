@@ -12,8 +12,26 @@ import html2canvas from 'html2canvas';
  * @returns {Object} Certificate data
  */
 export function generateCertificate({ course, user, completionDate, id }) {
-  if (!course || !user || !completionDate) {
-    throw new Error('Missing required parameters for certificate generation');
+  // Validate all required parameters
+  if (!course) {
+    throw new Error('Missing required parameter: course');
+  }
+  if (!user) {
+    throw new Error('Missing required parameter: user');
+  }
+  if (!completionDate) {
+    throw new Error('Missing required parameter: completionDate');
+  }
+  
+  // Validate required course properties
+  if (!course.id) {
+    throw new Error('Missing required course property: id');
+  }
+  if (!course.title) {
+    course.title = 'Unnamed Course'; // Fallback for missing title
+  }
+  if (!course.category) {
+    course.category = 'General'; // Fallback for missing category
   }
   
   const formattedDate = new Date(completionDate).toLocaleDateString('en-US', {
@@ -33,8 +51,8 @@ export function generateCertificate({ course, user, completionDate, id }) {
     formattedIssueDate: formattedDate,
     validUntil: null, // Certificates don't expire in this system
     certificateNumber: `MQ-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}-${course.id}`,
-    hoursCompleted: course.duration.replace(/\D/g, ''),
-    modules: course.modules
+    hoursCompleted: course.duration ? course.duration.replace(/\D/g, '') : '0',
+    modules: course.modules || 0
   };
 }
 
