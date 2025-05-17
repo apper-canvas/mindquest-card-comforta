@@ -656,7 +656,8 @@ function MainFeature() {
             </div>
           )}
         </motion.div>
-  );
+    );
+  };
   
   // Render the appropriate component based on the quiz state
   return (
