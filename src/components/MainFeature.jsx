@@ -465,33 +465,34 @@ function MainFeature() {
         ) : (
           showAdaptiveContent ? (
             <div className="card p-6">
-              <h3 className="text-xl font-bold">{selectedQuiz.title} - Detailed Results</h3>
-              <div className="text-surface-600 dark:text-surface-300">
-                Score: {score}/{selectedQuiz.questions.length}
+              <div>
+                <h3 className="text-xl font-bold">{selectedQuiz.title} - Detailed Results</h3>
+                <div className="text-surface-600 dark:text-surface-300">
+                  Score: {score}/{selectedQuiz.questions.length}
+                </div>
               </div>
-            </div>
-            
-            <div className="space-y-6">
-              {userAnswers.map((answer, index) => (
-                <div key={index} className="border-b border-surface-200 dark:border-surface-700 pb-4 last:border-b-0">
-                  <div className="flex items-start gap-3">
-                    {answer.isCorrect ? (
-                      <CheckCircleIcon className="w-5 h-5 mt-1 text-green-500 flex-shrink-0" />
-                    ) : (
-                      <XCircleIcon className="w-5 h-5 mt-1 text-red-500 flex-shrink-0" />
-                    )}
-                    
-                    <div>
-                      <div className="font-medium mb-2">Question {index + 1}: {answer.question}</div>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-1">
-                        <div className="text-sm">
-                          <span className="text-surface-500 dark:text-surface-400">Your answer: </span>
-                          <span className={answer.isCorrect ? "text-green-600 dark:text-green-400 font-medium" : "text-red-600 dark:text-red-400 font-medium"}>
-                            {answer.userAnswer}
-                          </span>
-                        </div>
+              
+              <div className="space-y-6">
+                {userAnswers.map((answer, index) => (
+                  <div key={index} className="border-b border-surface-200 dark:border-surface-700 pb-4 last:border-b-0">
+                    <div className="flex items-start gap-3">
+                      {answer.isCorrect ? (
+                        <CheckCircleIcon className="w-5 h-5 mt-1 text-green-500 flex-shrink-0" />
+                      ) : (
+                        <XCircleIcon className="w-5 h-5 mt-1 text-red-500 flex-shrink-0" />
+                      )}
                         
+                      <div>
+                        <div className="font-medium mb-2">Question {index + 1}: {answer.question}</div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-1">
+                          <div className="text-sm">
+                            <span className="text-surface-500 dark:text-surface-400">Your answer: </span>
+                            <span className={answer.isCorrect ? "text-green-600 dark:text-green-400 font-medium" : "text-red-600 dark:text-red-400 font-medium"}>
+                              {answer.userAnswer}
+                            </span>
+                          </div>
+                          
                         {!answer.isCorrect && (
                           <div className="text-sm">
                             <span className="text-surface-500 dark:text-surface-400">Correct answer: </span>
@@ -501,79 +502,77 @@ function MainFeature() {
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={viewAdaptiveContent}
-                className="btn btn-primary flex items-center justify-center gap-2 mr-3"
-              >
-                <ZapIcon className="w-4 h-4" /> View Personalized Path
-              </button>
-              <button
-                onClick={resetQuiz}
-                className="btn btn-outline flex items-center justify-center gap-2"
-              >
-                <RotateCcwIcon className="w-4 h-4" /> Try Another Quiz
-              </button>
-            </div>
-          </div>
-          ) : (
-          <div className="card p-6">
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <TrendingUpIcon className="w-5 h-5 text-primary" />
-                Your Adaptive Learning Path
-              </h3>
-              <div className="text-surface-600 dark:text-surface-300 text-sm">
-                Based on quiz performance
+                ))}
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={viewAdaptiveContent}
+                  className="btn btn-primary flex items-center justify-center gap-2 mr-3"
+                >
+                  <ZapIcon className="w-4 h-4" /> View Personalized Path
+                </button>
+                <button
+                  onClick={resetQuiz}
+                  className="btn btn-outline flex items-center justify-center gap-2"
+                >
+                  <RotateCcwIcon className="w-4 h-4" /> Try Another Quiz
+                </button>
               </div>
             </div>
-            
-            {/* Proficiency Status */}
-            <div className="mb-6 p-4 bg-surface-100 dark:bg-surface-800 rounded-lg">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <div className="text-xs text-surface-500 mb-1">Subject</div>
-                  <div className="font-medium capitalize">{selectedQuiz.subject}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-surface-500 mb-1">Current Level</div>
-                  <div className="font-medium capitalize">{currentDifficulty}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-surface-500 mb-1">Proficiency Score</div>
-                  <div className="font-medium">{learningProfile.subjects[selectedQuiz.subject.toLowerCase()]?.proficiencyScore.toFixed(1) || 0}%</div>
+          ) : (
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <TrendingUpIcon className="w-5 h-5 text-primary" />
+                  Your Adaptive Learning Path
+                </h3>
+                <div className="text-surface-600 dark:text-surface-300 text-sm">
+                  Based on quiz performance
                 </div>
               </div>
               
-              {/* Performance Analysis */}
-              <div className="border-t border-surface-200 dark:border-surface-700 pt-4 mt-4">
-                <div className="text-sm mb-2">Based on your quiz results, we've adjusted your learning path:</div>
-                <ul className="text-sm list-disc list-inside space-y-1 pl-2">
-                  {userAnswers.some(a => !a.isCorrect) && (
-                    <li>We'll provide more practice on topics you found challenging</li>
-                  )}
-                  {percentage >= 70 && (
-                    <li>Your content difficulty has been adjusted to match your skills</li>
-                  )}
-                  <li>Your next recommended quizzes and courses will adapt to your strengths and weaknesses</li>
-                </ul>
+              {/* Proficiency Status */}
+              <div className="mb-6 p-4 bg-surface-100 dark:bg-surface-800 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <div className="text-xs text-surface-500 mb-1">Subject</div>
+                    <div className="font-medium capitalize">{selectedQuiz.subject}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-surface-500 mb-1">Current Level</div>
+                    <div className="font-medium capitalize">{currentDifficulty}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-surface-500 mb-1">Proficiency Score</div>
+                    <div className="font-medium">{learningProfile.subjects[selectedQuiz.subject.toLowerCase()]?.proficiencyScore.toFixed(1) || 0}%</div>
+                  </div>
+                </div>
+                
+                {/* Performance Analysis */}
+                <div className="border-t border-surface-200 dark:border-surface-700 pt-4 mt-4">
+                  <div className="text-sm mb-2">Based on your quiz results, we've adjusted your learning path:</div>
+                  <ul className="text-sm list-disc list-inside space-y-1 pl-2">
+                    {userAnswers.some(a => !a.isCorrect) && (
+                      <li>We'll provide more practice on topics you found challenging</li>
+                    )}
+                    {percentage >= 70 && (
+                      <li>Your content difficulty has been adjusted to match your skills</li>
+                    )}
+                    <li>Your next recommended quizzes and courses will adapt to your strengths and weaknesses</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-end gap-3">
+                <button onClick={backToResults} className="btn btn-outline">Back to Results</button>
+                <button onClick={resetQuiz} className="btn btn-primary">
+                  Try Another Quiz
+                </button>
               </div>
             </div>
-            
-            <div className="mt-6 flex justify-end gap-3">
-              <button onClick={backToResults} className="btn btn-outline">Back to Results</button>
-              <button onClick={resetQuiz} className="btn btn-primary">
-                Try Another Quiz
-              </button>
-            </div>
-        </div>
           </div>
-        )}
+          )}
       </motion.div>
     );
   };
