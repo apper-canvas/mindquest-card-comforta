@@ -10,14 +10,6 @@ function Profile() {
   const { currentUser, updateProfile } = useAuth();
   const { learningProfile } = useLearningProfile();
   const [isEditMode, setIsEditMode] = useState(false);
-    displayName: '',
-    email: '',
-    bio: 'I love learning new things on MindQuest!',
-    preferences: {
-      emailNotifications: true,
-      darkMode: document.documentElement.classList.contains('dark')
-    }
-  });
   
   const [profileData, setProfileData] = useState({
     displayName: '',
