@@ -466,7 +466,8 @@ function MainFeature() {
           showAdaptiveContent ? (
             <div className="card p-6">
               <div>
-                <h3 className="text-xl font-bold">{selectedQuiz.title} - Detailed Results</h3>
+                <h3 className="text-xl font-bold">
+                  {selectedQuiz.title} - Detailed Results</h3>
                 <div className="text-surface-600 dark:text-surface-300">
                   Score: {score}/{selectedQuiz.questions.length}
                 </div>
@@ -482,7 +483,7 @@ function MainFeature() {
                         <XCircleIcon className="w-5 h-5 mt-1 text-red-500 flex-shrink-0" />
                       )}
                         
-                      <div>
+                      <div className="flex-grow">
                         <div className="font-medium mb-2">Question {index + 1}: {answer.question}</div>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-1">
@@ -499,13 +500,13 @@ function MainFeature() {
                             <span className="text-green-600 dark:text-green-400 font-medium">{answer.correctAnswer}</span>
                           </div>
                         )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
               
-              <div className="mt-6 flex justify-end">
               <div className="mt-6">
                 <div className="flex justify-end gap-3">
                   <button
@@ -518,8 +519,9 @@ function MainFeature() {
                     onClick={resetQuiz}
                     className="btn btn-outline flex items-center justify-center gap-2"
                   >
-                  <RotateCcwIcon className="w-4 h-4" /> Try Another Quiz
-                </button>
+                    <RotateCcwIcon className="w-4 h-4" /> Try Another Quiz
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -572,8 +574,8 @@ function MainFeature() {
                   Try Another Quiz
                 </button>
               </div>
-            </div>
-          </div>
+          )
+        )}
           )}
       </motion.div>
     );
