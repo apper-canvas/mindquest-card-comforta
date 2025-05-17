@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { useSelector } from 'react-redux';
 import { getIcon } from '../utils/iconUtils'; 
-import { useAuth } from '../context/AuthContext';
 import { useLearningProfile } from '../context/LearningProfileContext';
 import { validateProfileData } from '../utils/authUtils';
+import { getUserProfile, updateUserProfile } from '../services/UserService';
+import { useContext } from 'react';
+import { AuthContext } from '../App';
 
 function Profile() {
-  const { currentUser, updateProfile } = useAuth();
+  const { currentUser } = useContext(AuthContext);
   const { learningProfile } = useLearningProfile();
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
   
-  const [profileData, setProfileData] = useState({
-    displayName: '',
-    email: '',
-    bio: 'I love learning new things on MindQuest!',
+  const [formData, setFormData] = useState({
     location: '',
     occupation: '',
     interests: '',
@@ -23,6 +25,7 @@ function Profile() {
       darkMode: document.documentElement.classList.contains('dark')
     }
   });
+  const [profileData, setProfileData] = useState({});
   
   // Stats data
   const [stats, setStats] = useState({
@@ -47,20 +50,39 @@ function Profile() {
   const HeartIcon = getIcon('Heart');
   const CameraIcon = getIcon('Camera');
   const ImageIcon = getIcon('Image');
-
-  // Set initial profile data from current user
-  useEffect(() => {
-    if (currentUser) {
-      setProfileData(prev => ({
-        ...prev,
-        displayName: currentUser.displayName,
-        email: currentUser.email,
-        bio: currentUser.bio || prev.bio,
-        location: currentUser.location || '',
-        occupation: currentUser.occupation || '',
-        interests: currentUser.interests || ''
-      }));
-    }
+  
+  // Fetch user profile data from database
+  useEffect(() => { 
+    const fetchUserProfile = async () => {
+      if (!currentUser) return;
+      
+      setIsLoading(true);
+      try {
+        const profile = await getUserProfile(currentUser.userId);
+        setUserProfile(profile);
+        
+        // Set form data from profile
+        setFormData({
+          displayName: profile.displayName || currentUser.displayName,
+          email: profile.email || currentUser.email,
+          bio: profile.bio || 'I love learning new things on MindQuest!',
+          location: profile.location || '',
+          occupation: profile.occupation || '',
+          interests: profile.interests || '',
+          preferences: profile.preferences || {
+            emailNotifications: true,
+            darkMode: document.documentElement.classList.contains('dark')
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        toast.error("Failed to load user profile");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUserProfile();
   }, [currentUser]);
 
   // Calculate stats from learning profile
@@ -91,14 +113,14 @@ function Profile() {
   const [isUploading, setIsUploading] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const fileInputRef = {};
-
-  const handleChange = (e) => {
+  
+  const handleFormChange = (e) => {
     const { name, value, type, checked } = e.target;
     
     if (name.includes('.')) {
       // Handle nested properties like preferences.darkMode
       const [parent, child] = name.split('.');
-      setProfileData(prev => ({
+      setFormData(prev => ({
         ...prev,
         [parent]: {
           ...prev[parent],
@@ -107,14 +129,14 @@ function Profile() {
       }));
     } else {
       // Handle top-level properties
-      setProfileData(prev => ({
+      setFormData(prev => ({
         ...prev,
         [name]: value
       }));
     }
   };
   
-  const handleFileChange = (e) => {
+  const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
     setFileError('');
     
@@ -142,9 +164,24 @@ function Profile() {
     reader.readAsDataURL(file);
   };
 
-  const handleSave = async () => {
-    // In a real application, this would update the user's profile in the database
-    const validation = validateProfileData(profileData);
+  const handleProfileSave = async () => {
+    if (!currentUser || !userProfile) {
+      toast.error("User data not available");
+      return;
+    }
+    
+    setIsUploading(true);
+    
+    try {
+      // Prepare updated profile data
+      const updatedProfileData = {
+        ...userProfile,
+        ...formData,
+        photoURL: previewUrl || userProfile.photoURL
+      };
+      
+      // Validate profile data
+      const validation = validateProfileData(formData);
     
     if (!validation.isValid) {
       setFormErrors(validation.errors);
@@ -152,13 +189,21 @@ function Profile() {
       return;
     }
     
-    try {
-      await updateProfile(profileData, selectedFile);
+      // Update profile in database
+      const updatedProfile = await updateUserProfile(updatedProfileData);
+      
+      // Update local state
+      setUserProfile(updatedProfile);
       setIsEditMode(false);
-      toast.success('Profile updated successfully!');
+      
+      toast.success("Profile updated successfully!");
     } catch (error) {
-      toast.error('Failed to update profile: ' + error.message);
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setIsUploading(false);
     }
+    
   };
 
   return (
@@ -176,7 +221,7 @@ function Profile() {
             {isEditMode ? (
               <div className="flex gap-2">
                 <button 
-                  onClick={handleSave}
+                  onClick={handleProfileSave}
                   className="btn btn-primary flex items-center gap-1"
                 >
                   <CheckIcon className="w-4 h-4" /> Save
@@ -204,13 +249,13 @@ function Profile() {
                 {isEditMode ? (
                   <div className="w-32 h-32 rounded-full overflow-hidden mb-4 border-2 border-primary relative group">
                     <img 
-                      src={previewUrl || currentUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.displayName)}&background=6366f1&color=fff&size=128`} 
-                      alt={profileData.displayName}
+                      src={previewUrl || userProfile?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.displayName)}&background=6366f1&color=fff&size=128`} 
+                      alt={formData.displayName}
                       className="w-full h-full object-cover"
                     />
                     <div 
                       className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                      onClick={() => document.getElementById('profilePicture').click()}
+                      onClick={() => document.getElementById('profilePic').click()}
                     >
                       <div className="text-white text-center">
                         <CameraIcon className="w-8 h-8 mx-auto mb-1" />
@@ -219,17 +264,17 @@ function Profile() {
                     </div>
                     <input 
                       type="file" 
-                      id="profilePicture" 
+                      id="profilePic" 
                       accept="image/*" 
                       className="hidden" 
-                      onChange={handleFileChange}
+                      onChange={handleProfileImageChange}
                     />
                   </div>
                 ) : (
                   <div className="w-32 h-32 rounded-full overflow-hidden mb-4 border-2 border-primary">
                     <img 
-                      src={currentUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.displayName)}&background=6366f1&color=fff&size=128`} 
-                      alt={profileData.displayName}
+                      src={userProfile?.photoURL || currentUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.displayName)}&background=6366f1&color=fff&size=128`} 
+                      alt={userProfile?.displayName || currentUser?.displayName}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -244,8 +289,8 @@ function Profile() {
                         type="text" 
                         id="displayName" 
                         name="displayName" 
-                        value={profileData.displayName} 
-                        onChange={handleChange}
+                        value={formData.displayName} 
+                        onChange={handleFormChange}
                         className="form-input" 
                         required
                       />
@@ -255,8 +300,8 @@ function Profile() {
                       <textarea 
                         id="bio" 
                         name="bio" 
-                        value={profileData.bio} 
-                        onChange={handleChange}
+                        value={formData.bio} 
+                        onChange={handleFormChange}
                         rows={4}
                         className="form-input" 
                       />
@@ -271,8 +316,8 @@ function Profile() {
                           type="text" 
                           id="location" 
                           name="location" 
-                          value={profileData.location} 
-                          onChange={handleChange}
+                          value={formData.location} 
+                          onChange={handleFormChange}
                           className="form-input pl-10" 
                           placeholder="City, Country"
                         />
@@ -288,8 +333,8 @@ function Profile() {
                           type="text" 
                           id="occupation" 
                           name="occupation" 
-                          value={profileData.occupation} 
-                          onChange={handleChange}
+                          value={formData.occupation} 
+                          onChange={handleFormChange}
                           className="form-input pl-10" 
                           placeholder="Your occupation"
                         />
@@ -303,8 +348,8 @@ function Profile() {
                         type="checkbox" 
                         id="emailNotifications" 
                         name="preferences.emailNotifications" 
-                        checked={profileData.preferences.emailNotifications} 
-                        onChange={handleChange}
+                        checked={formData.preferences?.emailNotifications} 
+                        onChange={handleFormChange}
                         className="mr-2 rounded text-primary focus:ring-primary" 
                       />
                       <label htmlFor="emailNotifications" className="text-sm">
@@ -321,8 +366,8 @@ function Profile() {
                           type="text" 
                           id="interests" 
                           name="interests" 
-                          value={profileData.interests} 
-                          onChange={handleChange}
+                          value={formData.interests} 
+                          onChange={handleFormChange}
                           className="form-input pl-10" 
                           placeholder="Coding, learning, etc."
                         />
@@ -331,12 +376,12 @@ function Profile() {
                   </div>
                 ) : (
                   <div className="text-center">
-                    <h2 className="text-xl font-bold mb-2">{profileData.displayName}</h2>
-                    <p className="text-surface-600 dark:text-surface-400 text-sm mb-4">{profileData.email}</p>
-                    {profileData.location && <p className="text-surface-600 dark:text-surface-400 text-sm mb-2"><MapPinIcon className="inline w-4 h-4 mr-1" />{profileData.location}</p>}
-                    {profileData.occupation && <p className="text-surface-600 dark:text-surface-400 text-sm mb-2"><BriefcaseIcon className="inline w-4 h-4 mr-1" />{profileData.occupation}</p>}
-                    <p className="text-surface-700 dark:text-surface-300">{profileData.bio}</p>
-                  </div>
+                    <h2 className="text-xl font-bold mb-2">{userProfile?.displayName || currentUser?.displayName}</h2>
+                    <p className="text-surface-600 dark:text-surface-400 text-sm mb-4">{userProfile?.email || currentUser?.email}</p>
+                    {userProfile?.location && <p className="text-surface-600 dark:text-surface-400 text-sm mb-2"><MapPinIcon className="inline w-4 h-4 mr-1" />{userProfile.location}</p>}
+                    {userProfile?.occupation && <p className="text-surface-600 dark:text-surface-400 text-sm mb-2"><BriefcaseIcon className="inline w-4 h-4 mr-1" />{userProfile.occupation}</p>}
+                    <p className="text-surface-700 dark:text-surface-300">{userProfile?.bio || 'I love learning new things on MindQuest!'}</p>
+                 </div>
                 )}
               </div>
             </div>
@@ -397,18 +442,18 @@ function Profile() {
                 </div>
               </div>
               
-              {!isEditMode && profileData.interests && (
+              {!isEditMode && userProfile?.interests && (
                 <div className="mt-6">
                   <h2 className="text-xl font-bold mb-4">Interests</h2>
                   <div className="flex flex-wrap gap-2">
-                    {profileData.interests.split(',').map((interest, index) => (
+                    {userProfile.interests.split(',').map((interest, index) => (
                       interest.trim() && (
                         <span 
                           key={index} 
                           className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm"
                         >
                           {interest.trim()}
-                        </span>
+                       </span>
                       )
                     ))}
                   </div>

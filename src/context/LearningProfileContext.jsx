@@ -1,8 +1,11 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useContext } from 'react';
 import { toast } from 'react-toastify';
+import { useSelector } from 'react-redux';
 import { calculateProficiencyScore, determineDifficultyLevel } from '../utils/adaptiveLearningUtils';
-import { generateCertificate, saveCertificate } from '../utils/certificateUtils';
-import { useAuth } from './AuthContext';
+import { recordQuizAttempt } from '../services/QuizAttemptService';
+import { getOrCreateLearningProfile } from '../services/LearningProfileService';
+import { markCourseCompleted } from '../services/CompletedCourseService';
+import { generateCertificate } from '../services/CertificateService';
 // Create context
 const LearningProfileContext = createContext();
 
@@ -39,16 +42,51 @@ const initialLearningProfile = {
 };
 
 export function LearningProfileProvider({ children }) {
-  const { currentUser } = useAuth() || { currentUser: null };
+  const userState = useSelector((state) => state.user);
+  const currentUser = userState?.user;
+  const isAuthenticated = userState?.isAuthenticated;
+  
   const [learningProfile, setLearningProfile] = useState(() => {
-    const savedProfile = localStorage.getItem('learningProfile');
-    return savedProfile ? JSON.parse(savedProfile) : initialLearningProfile;
+    // Initialize with default values
+    return initialLearningProfile;
   });
   
-  // Save learning profile to localStorage whenever it changes
+  // Load learning profile from database when user is authenticated
   useEffect(() => {
-    localStorage.setItem('learningProfile', JSON.stringify(learningProfile));
-  }, [learningProfile]);
+    const fetchLearningProfile = async () => {
+      if (!isAuthenticated || !currentUser) return;
+      
+      try {
+        const subjects = {};
+        
+        // For each subject, get or create profile
+        for (const subject of ['programming', 'languages', 'mathematics']) {
+          const profile = await getOrCreateLearningProfile(currentUser.userId, subject);
+          subjects[subject] = {
+            proficiencyScore: profile.proficiencyScore || 0,
+            difficultyLevel: profile.difficultyLevel || 'beginner',
+            quizAttempts: [], // To be loaded separately
+            topics: {}
+          };
+        }
+        
+        setLearningProfile(prev => ({
+          ...prev,
+          subjects,
+          lastActivity: new Date().toISOString(),
+          preferences: {
+            learningPace: 'moderate',
+            showRecommendations: true
+          }
+        }));
+      } catch (error) {
+        console.error("Error loading learning profile:", error);
+        toast.error("Failed to load learning profile");
+      }
+    };
+    
+    fetchLearningProfile();
+  }, [isAuthenticated, currentUser]);
 
   /**
    * Mark a course as completed and generate a certificate
@@ -57,56 +95,39 @@ export function LearningProfileProvider({ children }) {
    * @returns {Object} The generated certificate data
    */
   const completeCourse = (course) => {
-    if (!course) return null;
+    return async (course) => {
+      if (!course) return null;
     
-    // Validate user exists before proceeding
-    if (!currentUser) {
-      toast.error("You must be logged in to complete a course");
-      return null;
-    }
-    
-    // Check if course is already completed
-    if ((learningProfile.completedCourses || []).some(c => c.id === course.id)) {
-      toast.info("You've already completed this course!");
-      return null;
-    }
-    
-    setLearningProfile(prevProfile => {
-      // Mark course as completed
-      const completedCourse = {
-        ...course,
-        completionDate: new Date().toISOString()
-      };
-      
-      let certificateData = null;
-      
-      try {
-        // Generate certificate data
-        certificateData = generateCertificate({
-          course,
-          user: currentUser,
-          completionDate: new Date().toISOString(),
-          id: `cert-${Date.now()}-${course.id}`
-        });
-        
-        // Save the certificate
-        saveCertificate(certificateData);
-      } catch (error) {
-        toast.error(`Certificate generation failed: ${error.message}`);
+      // Validate user exists before proceeding
+      if (!isAuthenticated || !currentUser) {
+        toast.error("You must be logged in to complete a course");
+        return null;
       }
-
-      return {
-        ...prevProfile,
-        completedCourses: [...(prevProfile.completedCourses || []), completedCourse],
-        certificates: [...(prevProfile.certificates || []), certificateData]
-      };
-    });
     
-    return true;
+      try {
+        // Mark course as completed in database
+        await markCourseCompleted(course.Id, currentUser.userId);
+    
+        // Generate certificate
+        const certificateData = await generateCertificate({
+          course,
+          user: currentUser
+        });
+    
+        toast.success("Course completed and certificate generated!");
+        return certificateData;
+      } catch (error) {
+        console.error("Error completing course:", error);
+        toast.error("Failed to complete course: " + error.message);
+        return null;
+      }
+    };
   };
   
-  // Update content progress for a specific course
-  const updateContentProgress = (courseId, progress) => {
+  /**
+   * Update content progress for a specific course
+   */
+  const updateContentProgress = async (courseId, progress) => {
     if (!courseId) return false;
     
     setLearningProfile(prev => ({
@@ -127,72 +148,28 @@ export function LearningProfileProvider({ children }) {
    * @param {Array} userAnswers - Array of user's answers with correctness information
    * @param {Number} totalQuestions - Total number of questions
    */
-  const recordQuizAttempt = (quizData, userAnswers, score, totalQuestions) => {
+  const recordQuizAttemptInProfile = async (quizData, userAnswers, score, totalQuestions) => {
     if (!quizData || !userAnswers) return;
     
-    const subject = quizData.subject.toLowerCase();
-    const attemptData = {
-      quizId: quizData.id,
-      quizTitle: quizData.title,
-      score,
-      totalQuestions,
-      percentageScore: (score / totalQuestions) * 100,
-      timestamp: new Date().toISOString(),
-      answers: userAnswers
-    };
-    
-    setLearningProfile(prevProfile => {
-      // Make sure the subject exists in the profile
-      if (!prevProfile.subjects[subject]) {
-        prevProfile.subjects[subject] = {
-          proficiencyScore: 0,
-          difficultyLevel: 'beginner',
-          quizAttempts: [],
-          topics: {}
-        };
-      }
-      
-      // Add new quiz attempt to the subject
-      const updatedAttempts = [...(prevProfile.subjects[subject].quizAttempts || []), attemptData];
-      
-      // Calculate new proficiency score based on all attempts
-      const proficiencyScore = calculateProficiencyScore(
-        prevProfile.subjects[subject].quizAttempts,
-        attemptData
-      );
-      
-      // Determine appropriate difficulty level
-      const difficultyLevel = determineDifficultyLevel(proficiencyScore);
-      
-      // Check if difficulty level has changed
-      const difficultyChanged = prevProfile.subjects[subject].difficultyLevel !== difficultyLevel;
-      
-      // If difficulty changed, notify the user
-      if (difficultyChanged) {
-        const action = difficultyLevel > prevProfile.subjects[subject].difficultyLevel ? 'increased' : 'adjusted';
-        toast.info(`Your ${subject} content difficulty has been ${action} to ${difficultyLevel} based on your performance.`);
-      }
-      
-      return {
-        ...prevProfile,
-        subjects: {
-          ...prevProfile.subjects,
-          [subject]: {
-            ...prevProfile.subjects[subject],
-            proficiencyScore,
-            difficultyLevel,
-            quizAttempts: updatedAttempts,
-          }
-        },
-        lastActivity: new Date().toISOString()
-      };
-    });
+    if (!isAuthenticated || !currentUser) {
+      toast.error("You must be logged in to record quiz attempt");
+      return;
+    }
+
+    try {
+      // Record quiz attempt in database
+      await recordQuizAttempt(quizData, score, totalQuestions, currentUser.userId);
+      toast.success("Quiz attempt recorded successfully!");
+    } catch (error) {
+      console.error("Error recording quiz attempt:", error);
+      toast.error("Failed to record quiz attempt");
+    }
   };
   
   return (
     <LearningProfileContext.Provider value={{ 
       learningProfile, 
-      recordQuizAttempt,
+      recordQuizAttempt: recordQuizAttemptInProfile,
       completeCourse,
       updateContentProgress
     }}>

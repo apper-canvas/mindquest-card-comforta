@@ -1,70 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getIcon } from '../utils/iconUtils';
 import MainFeature from '../components/MainFeature';
 import LearningPathDisplay from '../components/LearningPathDisplay';
 import { useLearningProfile } from '../context/LearningProfileContext';
-
-// Sample course data
-const popularCourses = [
-  {
-    id: 1,
-    title: "Python for Beginners",
-    category: "Programming",
-    level: "Beginner",
-    rating: 4.9,
-    enrolled: 12500,
-    image: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-    modules: 8,
-    duration: "12 hours",
-    completed: false
-  },
-  {
-    id: 2,
-    title: "Spanish for Travelers",
-    category: "Languages",
-    level: "Intermediate",
-    rating: 4.7,
-    enrolled: 8300,
-    image: "https://images.unsplash.com/photo-1551649779-a3aa7bd7edb1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-    modules: 10,
-    duration: "15 hours",
-    completed: false
-  },
-  {
-    id: 3,
-    title: "Advanced Calculus",
-    category: "Mathematics",
-    level: "Advanced",
-    rating: 4.8,
-    enrolled: 5200,
-    image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-    modules: 12,
-    duration: "20 hours",
-    completed: false
-  },
-  {
-    id: 4,
-    title: "Web Development Bootcamp",
-    category: "Programming",
-    level: "Intermediate",
-    rating: 4.9,
-    enrolled: 14200,
-    image: "https://images.unsplash.com/photo-1547658719-da2b51169166?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-    modules: 15,
-    duration: "30 hours",
-    completed: false
-  }
-];
+import { AuthContext } from '../App';
+import { getCourses } from '../services/CourseService';
+import { markCourseCompleted } from '../services/CompletedCourseService';
+import { generateCertificate } from '../services/CertificateService';
+import { getUserCompletedCourses } from '../services/CompletedCourseService';
 
 function Home() {
-  const { learningProfile, completeCourse } = useLearningProfile();
+  const { learningProfile } = useLearningProfile();
+  const { currentUser, isAuthenticated } = useContext(AuthContext);
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showLearningPath, setShowLearningPath] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [completedCourseIds, setCompletedCourseIds] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
-  // Get icons as components
   const StarIcon = getIcon('Star');
   const UsersIcon = getIcon('Users');
   const ClockIcon = getIcon('Clock');
@@ -74,44 +31,79 @@ function Home() {
   const FilterIcon = getIcon('Filter');
   const AwardIcon = getIcon('Award');
   const TrendingUpIcon = getIcon('TrendingUp');
+  const LoaderIcon = getIcon('Loader');
   
-  const filteredCourses = popularCourses.filter(course => {
+  // Fetch courses from the database
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const coursesData = await getCourses();
+        setCourses(coursesData);
+        
+        if (isAuthenticated && currentUser) {
+          const completedCourses = await getUserCompletedCourses(currentUser.userId);
+          setCompletedCourseIds(completedCourses.map(course => course.courseId));
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load courses. Please try again later.");
+        toast.error("Failed to load courses");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [isAuthenticated, currentUser]);
+  
+  const filteredCourses = courses.filter(course => {
     // Filter by category if not 'all'
-    const categoryMatch = activeFilter === 'all' || course.category.toLowerCase() === activeFilter;
+    const categoryMatch = activeFilter === 'all' || (course.category && course.category.toLowerCase() === activeFilter);
     
     // Filter by search query
-    const searchMatch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        course.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        course.level.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchMatch = 
+      (course.title && course.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (course.category && course.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (course.level && course.level.toLowerCase().includes(searchQuery.toLowerCase()));
     
     return categoryMatch && searchMatch;
   });
   
   const handleEnrollCourse = (courseId) => {
     toast.success(`Successfully enrolled in course! Your learning journey begins now.`);
-    // In a real app, we would update the database here
   };
   
-  const handleCompleteCourse = (course) => {
-    // In a real app, we would verify completion requirements
-    const success = completeCourse(course);
+  const handleCompleteCourse = async (course) => {
+    if (!isAuthenticated) {
+      toast.warning("Please login to complete a course");
+      return;
+    }
     
-    if (success) {
+    try {
+      // Mark course as completed in the database
+      const completedCourse = await markCourseCompleted(course.Id, currentUser.userId);
+      
+      // Generate certificate
+      const certificateData = await generateCertificate({
+        course,
+        user: currentUser
+      });
+      
+      // Update local state
+      setCompletedCourseIds(prev => [...prev, course.Id]);
+      
       toast.success(
-        <>
+        <div>
           <span>Congratulations! You've completed {course.title}. </span>
           <span className="font-bold">Certificate generated and added to your profile.</span>
-        </>);
+        </div>
+      );
+    } catch (error) {
+      console.error("Error completing course:", error);
+      toast.error("Failed to complete course. Please try again.");
     }
   };
-  
-  // Get recommended courses based on user's learning profile
-  const getAdaptiveCourses = () => {
-    // This would typically fetch from an API based on the user's learning profile
-    // For now, we'll just return the regular courses but could be filtered by difficulty
-    return popularCourses;
-  };
-  
   
   return (
     <div className="container mx-auto px-4 py-8">
@@ -158,62 +150,77 @@ function Home() {
             <h2 className="text-2xl md:text-3xl font-bold">Explore Popular Courses</h2>
             
           <div className="flex flex-col sm:flex-row gap-3">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <LoaderIcon className="w-10 h-10 animate-spin text-primary" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-10">
+            <p className="text-red-500 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="btn btn-primary"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : (
+        <>
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search courses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full rounded-lg border border-surface-200 dark:border-surface-700 
-                          bg-white dark:bg-surface-800 focus:ring-2 focus:ring-primary focus:border-primary"
-              />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-surface-400">
-                <SearchIcon className="w-5 h-5" />
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2 bg-white dark:bg-surface-800 p-2 rounded-lg border border-surface-200 dark:border-surface-700">
-              <FilterIcon className="w-5 h-5 text-surface-500" />
-              <span className="text-sm font-medium mr-2">Filter:</span>
-              <div className="flex gap-1">
-                {['all', 'programming', 'languages', 'mathematics'].map(filter => (
+            <>
+              <h2 className="text-2xl md:text-3xl font-bold">Explore Popular Courses</h2>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search courses..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-surface-200 dark:border-surface-700 
+                              bg-white dark:bg-surface-800 focus:ring-2 focus:ring-primary focus:border-primary"
+                  />
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-surface-400">
+                    <SearchIcon className="w-5 h-5" />
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 bg-white dark:bg-surface-800 p-2 rounded-lg border border-surface-200 dark:border-surface-700">
+                  <FilterIcon className="w-5 h-5 text-surface-500" />
+                  <span className="text-sm font-medium mr-2">Filter:</span>
+                  <div className="flex gap-1">
+                    {['all', 'programming', 'languages', 'mathematics'].map(filter => (
+                      <button
+                        key={filter}
+                        onClick={() => setActiveFilter(filter)}
+                        className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                          activeFilter === filter 
+                            ? 'bg-primary text-white' 
+                            : 'bg-surface-100 dark:bg-surface-700 hover:bg-surface-200 dark:hover:bg-surface-600'
+                        }`}
+                      >
+                        {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                   <button
-                    key={filter}
-                    onClick={() => setActiveFilter(filter)}
-                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                      activeFilter === filter 
-                        ? 'bg-primary text-white' 
-                        : 'bg-surface-100 dark:bg-surface-700 hover:bg-surface-200 dark:hover:bg-surface-600'
-                    }`}
-                  >
-                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          </>
-          )}
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredCourses.length > 0 ? (
-            filteredCourses.map(course => {
-              // Check if the course is in completedCourses
-              const isCompleted = learningProfile.completedCourses &&
+            </>
                 learningProfile.completedCourses.some(c => c.id === course.id);
               
               return (
                 <div 
                   key={course.id} 
                   className="card overflow-hidden group hover:shadow-lg transition-shadow duration-300"
-                >
-                  <div className="relative h-48 overflow-hidden">
-                    <img 
+              // Check if the course is completed
+              const isCompleted = completedCourseIds.includes(course.Id);
                       src={course.image} 
                       alt={course.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
+                  key={course.Id} 
                     <div className="absolute top-3 right-3 bg-white dark:bg-surface-800 rounded-full px-2 py-1 text-xs font-medium flex items-center gap-1">
                       <StarIcon className="w-3 h-3 text-accent" />
                       {course.rating}
@@ -262,7 +269,7 @@ function Home() {
                           View Certificate
                         </button>
                       </div>
-                    ) : (
+                          onClick={() => navigate(`/certificates`)}
                       <div className="mt-4 flex gap-2">
                         <Link 
                           to="/learning" 
@@ -302,3 +309,5 @@ function Home() {
 }
 
 export default Home;
+        </>
+        )}
