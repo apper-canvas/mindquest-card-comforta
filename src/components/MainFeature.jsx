@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { getIcon } from '../utils/iconUtils';
+import { useLearningProfile } from '../context/LearningProfileContext';
+import { analyzeQuizPerformance } from '../utils/adaptiveLearningUtils';
 
 // Sample quiz data
 const quizData = [
@@ -13,17 +15,20 @@ const quizData = [
       {
         id: 101,
         prompt: "What symbol is used for comments in Python?",
+        topic: "syntax",
         options: ["//", "/*", "#", "<!-- -->"],
         correctAnswer: "#"
       },
       {
         id: 102,
         prompt: "Which of the following is NOT a valid Python data type?",
+        topic: "data_types",
         options: ["int", "float", "character", "boolean"],
         correctAnswer: "character"
       },
       {
         id: 103,
+        topic: "operators",
         prompt: "What will be the output of: print(2 ** 3)?",
         options: ["6", "8", "9", "Error"],
         correctAnswer: "8"
@@ -38,18 +43,21 @@ const quizData = [
       {
         id: 201,
         prompt: "What is 'hello' in Spanish?",
+        topic: "greetings",
         options: ["Bonjour", "Ciao", "Hola", "Hallo"],
         correctAnswer: "Hola"
       },
       {
         id: 202,
         prompt: "How do you say 'thank you' in Spanish?",
+        topic: "common_phrases",
         options: ["Merci", "Gracias", "Danke", "Grazie"],
         correctAnswer: "Gracias"
       },
       {
         id: 203,
         prompt: "What does 'mañana' mean?",
+        topic: "time_expressions",
         options: ["Today", "Yesterday", "Tomorrow", "Night"],
         correctAnswer: "Tomorrow"
       }
@@ -63,18 +71,21 @@ const quizData = [
       {
         id: 301,
         prompt: "Solve for x: 2x + 5 = 15",
+        topic: "linear_equations",
         options: ["5", "7.5", "10", "5.5"],
         correctAnswer: "5"
       },
       {
         id: 302,
         prompt: "What is the value of y in: 4y - 3 = 13?",
+        topic: "linear_equations",
         options: ["3", "4", "5", "4.5"],
         correctAnswer: "4"
       },
       {
         id: 303,
         prompt: "If 3a = 18, what is the value of a?",
+        topic: "algebraic_expressions",
         options: ["3", "6", "9", "5"],
         correctAnswer: "6"
       }
@@ -92,6 +103,11 @@ function MainFeature() {
   const [viewingResults, setViewingResults] = useState(false);
   const [userAnswers, setUserAnswers] = useState([]);
   const [timeLeft, setTimeLeft] = useState(null);
+  const [showAdaptiveContent, setShowAdaptiveContent] = useState(false);
+  const [quizAnalysis, setQuizAnalysis] = useState(null);
+  
+  // Get learning profile context
+  const { learningProfile, recordQuizAttempt } = useLearningProfile();
   
   // Get icons as components
   const ArrowRightIcon = getIcon('ArrowRight');
@@ -103,6 +119,9 @@ function MainFeature() {
   const BrainIcon = getIcon('Brain');
   const ClipboardListIcon = getIcon('ClipboardList');
   const PenToolIcon = getIcon('PenTool');
+  const TrendingUpIcon = getIcon('TrendingUp');
+  const TargetIcon = getIcon('Target');
+  const ZapIcon = getIcon('Zap');
   
   // Start a quiz
   const startQuiz = (quiz) => {
@@ -130,8 +149,10 @@ function MainFeature() {
     setUserAnswers([...userAnswers, {
       questionId: currentQuestion.id,
       question: currentQuestion.prompt,
+      topic: currentQuestion.topic || 'general',
       userAnswer: selectedAnswer,
       correctAnswer: currentQuestion.correctAnswer,
+      subject: selectedQuiz.subject.toLowerCase(),
       isCorrect
     }]);
     
@@ -145,6 +166,12 @@ function MainFeature() {
       setTimeLeft(60); // Reset timer for next question
     } else {
       setQuizCompleted(true);
+      
+      // Record quiz attempt for adaptive learning
+      recordQuizAttempt(
+        selectedQuiz,
+        [...userAnswers, { questionId: currentQuestion.id, question: currentQuestion.prompt, topic: currentQuestion.topic || 'general', userAnswer: selectedAnswer, correctAnswer: currentQuestion.correctAnswer, subject: selectedQuiz.subject.toLowerCase(), isCorrect }],
+        isCorrect ? score + 1 : score, selectedQuiz.questions.length);
     }
   };
   
@@ -164,6 +191,7 @@ function MainFeature() {
       setUserAnswers([...userAnswers, {
         questionId: currentQuestion.id,
         question: currentQuestion.prompt,
+        topic: currentQuestion.topic || 'general',
         userAnswer: selectedAnswer || "No answer",
         correctAnswer: currentQuestion.correctAnswer,
         isCorrect: false
@@ -175,6 +203,10 @@ function MainFeature() {
         setTimeLeft(60); // Reset timer for next question
       } else {
         setQuizCompleted(true);
+        
+        // Record quiz attempt for adaptive learning even if time ran out
+        recordQuizAttempt(selectedQuiz, 
+          [...userAnswers, { questionId: currentQuestion.id, question: currentQuestion.prompt, topic: currentQuestion.topic || 'general', userAnswer: selectedAnswer || "No answer", correctAnswer: currentQuestion.correctAnswer, isCorrect: false, subject: selectedQuiz.subject.toLowerCase() }], score, selectedQuiz.questions.length);
       }
     }
     
@@ -191,6 +223,18 @@ function MainFeature() {
   // View results
   const viewResults = () => {
     setViewingResults(true);
+    // Analyze quiz results to provide adaptive content recommendations
+    const analysis = analyzeQuizPerformance(userAnswers);
+    setQuizAnalysis(analysis);
+  };
+  
+  // View adaptive learning recommendations
+  const viewAdaptiveContent = () => {
+    setShowAdaptiveContent(true);
+  };
+  
+  const backToResults = () => {
+    setShowAdaptiveContent(false);
   };
   
   // Component for quiz selection
@@ -319,6 +363,9 @@ function MainFeature() {
   const QuizResults = () => {
     const percentage = Math.round((score / selectedQuiz.questions.length) * 100);
     
+    // Get current difficulty level from learning profile for this subject
+    const currentDifficulty = learningProfile.subjects[selectedQuiz.subject.toLowerCase()]?.difficultyLevel || 'beginner';
+    
     let resultMessage = "";
     let resultIcon = null;
     
@@ -340,7 +387,7 @@ function MainFeature() {
         transition={{ duration: 0.5 }}
         className="max-w-2xl mx-auto"
       >
-        {!viewingResults ? (
+        {!viewingResults && !showAdaptiveContent ? (
           <div className="card p-8 text-center">
             <div className="mb-6 flex justify-center">
               {resultIcon}
@@ -382,18 +429,34 @@ function MainFeature() {
             <div className="text-lg mb-6">
               You scored <span className="font-bold">{score}</span> out of <span className="font-bold">{selectedQuiz.questions.length}</span>
             </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+            {/* Current Difficulty Level Indicator */}
+            <div className="mb-6 p-4 bg-surface-100 dark:bg-surface-800 rounded-lg">
+              <div className="text-sm text-surface-600 dark:text-surface-300 mb-2">Your current learning level:</div>
+              <div className="flex items-center justify-center gap-2 text-primary font-medium">
+                <TargetIcon className="w-5 h-5" />
+                <span className="capitalize">{currentDifficulty}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-2">
               <button
                 onClick={viewResults}
-                className="btn btn-primary flex items-center justify-center gap-2"
+                className="btn btn-outline flex items-center justify-center gap-2"
               >
                 <ClipboardListIcon className="w-4 h-4" /> View Detailed Results
               </button>
               
               <button
+                onClick={viewAdaptiveContent}
+                className="btn btn-primary flex items-center justify-center gap-2"
+              >
+                <TrendingUpIcon className="w-4 h-4" /> View Personalized Path
+              </button>
+              
+              <button
                 onClick={resetQuiz}
-                className="btn btn-outline flex items-center justify-center gap-2"
+                className="btn btn-secondary flex items-center justify-center gap-2"
               >
                 <RotateCcwIcon className="w-4 h-4" /> Try Another Quiz
               </button>
@@ -444,11 +507,67 @@ function MainFeature() {
             
             <div className="mt-6 flex justify-end">
               <button
+                onClick={viewAdaptiveContent}
+                className="btn btn-primary flex items-center justify-center gap-2 mr-3"
+              >
+                <ZapIcon className="w-4 h-4" /> View Personalized Path
+              </button>
+              <button
                 onClick={resetQuiz}
-                className="btn btn-primary flex items-center justify-center gap-2"
+                className="btn btn-outline flex items-center justify-center gap-2"
               >
                 <RotateCcwIcon className="w-4 h-4" /> Try Another Quiz
               </button>
+            </div>
+          </div>
+        ) : showAdaptiveContent && (
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <TrendingUpIcon className="w-5 h-5 text-primary" />
+                Your Adaptive Learning Path
+              </h3>
+              <div className="text-surface-600 dark:text-surface-300 text-sm">
+                Based on quiz performance
+              </div>
+            </div>
+            
+            {/* Proficiency Status */}
+            <div className="mb-6 p-4 bg-surface-100 dark:bg-surface-800 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <div className="text-xs text-surface-500 mb-1">Subject</div>
+                  <div className="font-medium capitalize">{selectedQuiz.subject}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-surface-500 mb-1">Current Level</div>
+                  <div className="font-medium capitalize">{currentDifficulty}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-surface-500 mb-1">Proficiency Score</div>
+                  <div className="font-medium">{learningProfile.subjects[selectedQuiz.subject.toLowerCase()]?.proficiencyScore.toFixed(1) || 0}%</div>
+                </div>
+              </div>
+              
+              {/* Performance Analysis */}
+              <div className="border-t border-surface-200 dark:border-surface-700 pt-4 mt-4">
+                <div className="text-sm mb-2">Based on your quiz results, we've adjusted your learning path:</div>
+                <ul className="text-sm list-disc list-inside space-y-1 pl-2">
+                  {userAnswers.some(a => !a.isCorrect) && (
+                    <li>We'll provide more practice on topics you found challenging</li>
+                  )}
+                  {percentage >= 70 && (
+                    <li>Your content difficulty has been adjusted to match your skills</li>
+                  )}
+                  <li>Your next recommended quizzes and courses will adapt to your strengths and weaknesses</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={backToResults} className="btn btn-outline">Back to Results</button>
+              <button onClick={resetQuiz} className="btn btn-primary">
+                Try Another Quiz
             </div>
           </div>
         )}
@@ -461,7 +580,7 @@ function MainFeature() {
     <div>
       {!quizStarted && <QuizSelection />}
       {quizStarted && !quizCompleted && <QuizQuestion />}
-      {quizCompleted && <QuizResults />}
+      {quizCompleted && <QuizResults />}      
     </div>
   );
 }

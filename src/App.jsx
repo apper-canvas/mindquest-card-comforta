@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { LearningProfileProvider } from './context/LearningProfileContext';
 import { ToastContainer } from 'react-toastify';
 import { getIcon } from './utils/iconUtils';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 
-function App() {
+    <LearningProfileProvider>
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
     return savedMode ? JSON.parse(savedMode) : 
            window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  useEffect(() => {
-    if (darkMode) {
+      <ToastContainer 
+        position="bottom-right" 
+      />
+    </LearningProfileProvider>
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');

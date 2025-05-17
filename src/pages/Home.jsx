@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { getIcon } from '../utils/iconUtils';
 import MainFeature from '../components/MainFeature';
+import LearningPathDisplay from '../components/LearningPathDisplay';
+import { useLearningProfile } from '../context/LearningProfileContext';
 
 // Sample course data
 const popularCourses = [
@@ -52,8 +54,10 @@ const popularCourses = [
 ];
 
 function Home() {
+  const { learningProfile } = useLearningProfile();
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showLearningPath, setShowLearningPath] = useState(false);
   
   // Get icons as components
   const StarIcon = getIcon('Star');
@@ -62,6 +66,7 @@ function Home() {
   const BookOpenIcon = getIcon('BookOpen');
   const SearchIcon = getIcon('Search');
   const FilterIcon = getIcon('Filter');
+  const TrendingUpIcon = getIcon('TrendingUp');
   
   const filteredCourses = popularCourses.filter(course => {
     // Filter by category if not 'all'
@@ -79,6 +84,14 @@ function Home() {
     toast.success(`Successfully enrolled in course! Your learning journey begins now.`);
   };
   
+  // Get recommended courses based on user's learning profile
+  const getAdaptiveCourses = () => {
+    // This would typically fetch from an API based on the user's learning profile
+    // For now, we'll just return the regular courses but could be filtered by difficulty
+    return popularCourses;
+  };
+  
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <section className="mb-16">
@@ -95,8 +108,31 @@ function Home() {
         <MainFeature />
       </section>
       
+      {/* Learning Path Toggle Button */}
+      <section className="mb-8 flex justify-center">
+        <button 
+          onClick={() => setShowLearningPath(!showLearningPath)}
+          className="flex items-center gap-2 btn btn-outline border-primary text-primary hover:bg-primary hover:text-white"
+        >
+          <TrendingUpIcon className="w-5 h-5" />
+          {showLearningPath ? 'Hide Learning Path' : 'View My Learning Path'}
+        </button>
+      </section>
+      
+      {/* Adaptive Learning Path */}
+      {showLearningPath && (
+        <section className="mb-12">
+          <div className="max-w-4xl mx-auto">
+            <LearningPathDisplay />
+          </div>
+        </section>
+      )}
+      
       <section className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+          {Object.values(learningProfile.subjects).some(subject => subject.quizAttempts.length > 0) ? (
+            <h2 className="text-2xl md:text-3xl font-bold">Recommended For You</h2>
+          ) : (
           <h2 className="text-2xl md:text-3xl font-bold">Explore Popular Courses</h2>
           
           <div className="flex flex-col sm:flex-row gap-3">
@@ -134,6 +170,7 @@ function Home() {
               </div>
             </div>
           </div>
+          )}
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
