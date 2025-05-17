@@ -568,6 +568,7 @@ function MainFeature() {
               <button onClick={backToResults} className="btn btn-outline">Back to Results</button>
               <button onClick={resetQuiz} className="btn btn-primary">
                 Try Another Quiz
+              </button>
             </div>
           </div>
         )}
