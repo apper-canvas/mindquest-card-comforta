@@ -58,6 +58,12 @@ export function LearningProfileProvider({ children }) {
   const completeCourse = (course) => {
     if (!course) return null;
     
+    // Validate user exists before proceeding
+    if (!currentUser) {
+      toast.error("You must be logged in to complete a course");
+      return null;
+    }
+    
     // Check if course is already completed
     if ((learningProfile.completedCourses || []).some(c => c.id === course.id)) {
       toast.info("You've already completed this course!");
@@ -71,16 +77,22 @@ export function LearningProfileProvider({ children }) {
         completionDate: new Date().toISOString()
       };
       
-      // Generate certificate data
-      const certificateData = generateCertificate({
-        course,
-        user: currentUser,
-        completionDate: new Date().toISOString(),
-        id: `cert-${Date.now()}-${course.id}`
-      });
+      let certificateData = null;
       
-      // Save the certificate and return updated profile
-      saveCertificate(certificateData);
+      try {
+        // Generate certificate data
+        certificateData = generateCertificate({
+          course,
+          user: currentUser,
+          completionDate: new Date().toISOString(),
+          id: `cert-${Date.now()}-${course.id}`
+        });
+        
+        // Save the certificate
+        saveCertificate(certificateData);
+      } catch (error) {
+        toast.error(`Certificate generation failed: ${error.message}`);
+      }
       
       return {
         ...prevProfile,

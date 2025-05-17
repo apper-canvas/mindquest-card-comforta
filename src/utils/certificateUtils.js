@@ -13,12 +13,19 @@ import html2canvas from 'html2canvas';
  */
 export function generateCertificate({ course, user, completionDate, id }) {
   // Validate all required parameters
-  if (!course) {
-    throw new Error('Missing required parameter: course');
+  if (!course || typeof course !== 'object') {
+    throw new Error('Missing or invalid required parameter: course');
   }
-  if (!user) {
+  
+  if (!user || typeof user !== 'object') {
     throw new Error('Missing required parameter: user');
   }
+  
+  // Validate user has required properties
+  if (!user.email) {
+    throw new Error('Missing required user property: email');
+  }
+  
   if (!completionDate) {
     throw new Error('Missing required parameter: completionDate');
   }
