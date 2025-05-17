@@ -574,6 +574,7 @@ function MainFeature() {
                   Try Another Quiz
                 </button>
               </div>
+            </div>
           )
         )}
           )}
