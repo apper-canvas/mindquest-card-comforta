@@ -100,7 +100,7 @@ export function LearningProfileProvider({ children }) {
         completedCourses: [...(prevProfile.completedCourses || []), completedCourse],
         certificates: [...(prevProfile.certificates || []), certificateData]
       };
-    }));
+    });
     
     return true;
   };
