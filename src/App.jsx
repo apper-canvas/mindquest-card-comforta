@@ -6,17 +6,15 @@ import { getIcon } from './utils/iconUtils';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 
-    <LearningProfileProvider>
+function App() {
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
     return savedMode ? JSON.parse(savedMode) : 
            window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-      <ToastContainer 
-        position="bottom-right" 
-      />
-    </LearningProfileProvider>
+  useEffect(() => {
+    if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
@@ -33,6 +31,7 @@ import NotFound from './pages/NotFound';
   const MoonIcon = getIcon('Moon');
 
   return (
+    <LearningProfileProvider>
     <div className="min-h-screen">
       <header className="fixed top-0 left-0 right-0 z-10 bg-white/80 dark:bg-surface-900/80 backdrop-blur-md border-b border-surface-200 dark:border-surface-700">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -83,6 +82,7 @@ import NotFound from './pages/NotFound';
         theme={darkMode ? "dark" : "light"}
       />
     </div>
+    </LearningProfileProvider>
   );
 }
 
