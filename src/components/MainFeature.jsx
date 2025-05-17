@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion'; 
 import { toast } from 'react-toastify';
 import { getIcon } from '../utils/iconUtils';
 import { useLearningProfile } from '../context/LearningProfileContext';
@@ -106,6 +106,16 @@ function MainFeature() {
   const [showAdaptiveContent, setShowAdaptiveContent] = useState(false);
   const [quizAnalysis, setQuizAnalysis] = useState(null);
   
+  // Use ref to store quiz state values that shouldn't trigger re-renders
+  const quizStateRef = useRef({
+    quizStarted: false,
+    quizCompleted: false,
+    timeLeft: null,
+    viewingResults: false,
+    currentQuestionIndex: 0,
+    selectedQuiz: null
+  });
+  
   // Get learning profile context
   const { learningProfile, recordQuizAttempt } = useLearningProfile();
   
@@ -133,6 +143,14 @@ function MainFeature() {
     setUserAnswers([]);
     setQuizStarted(true);
     setTimeLeft(60); // 60 seconds per question
+    
+    // Update ref values
+    quizStateRef.current = {
+      ...quizStateRef.current,
+      quizStarted: true,
+      quizCompleted: false,
+      timeLeft: 60
+    };
     setViewingResults(false);
   };
   
@@ -163,6 +181,11 @@ function MainFeature() {
     if (currentQuestionIndex < selectedQuiz.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedAnswer(null);
+      // Update ref values
+      quizStateRef.current = {
+        ...quizStateRef.current,
+        currentQuestionIndex: currentQuestionIndex + 1
+      };
       setTimeLeft(60); // Reset timer for next question
     } else {
       setQuizCompleted(true);
@@ -172,17 +195,34 @@ function MainFeature() {
         selectedQuiz,
         [...userAnswers, { questionId: currentQuestion.id, question: currentQuestion.prompt, topic: currentQuestion.topic || 'general', userAnswer: selectedAnswer, correctAnswer: currentQuestion.correctAnswer, subject: selectedQuiz.subject.toLowerCase(), isCorrect }],
         isCorrect ? score + 1 : score, selectedQuiz.questions.length);
+        
+      // Update ref values
+      quizStateRef.current = {
+        ...quizStateRef.current,
+        quizCompleted: true
+      };
     }
   };
   
   // Timer effect
   useEffect(() => {
     let timer;
-    if (quizStarted && !quizCompleted && timeLeft > 0 && !viewingResults) {
+    
+    // Update ref with current state values to avoid stale closures
+    quizStateRef.current = {
+      quizStarted,
+      quizCompleted,
+      timeLeft,
+      viewingResults,
+      currentQuestionIndex,
+      selectedQuiz
+    };
+    
+    if (quizStateRef.current.quizStarted && !quizStateRef.current.quizCompleted && quizStateRef.current.timeLeft > 0 && !quizStateRef.current.viewingResults) {
       timer = setTimeout(() => {
         setTimeLeft(timeLeft - 1);
       }, 1000);
-    } else if (timeLeft === 0) {
+    } else if (quizStateRef.current.timeLeft === 0) {
       // Time's up for current question
       toast.warning("Time's up! Moving to next question.");
       
@@ -207,16 +247,28 @@ function MainFeature() {
         // Record quiz attempt for adaptive learning even if time ran out
         recordQuizAttempt(selectedQuiz, 
           [...userAnswers, { questionId: currentQuestion.id, question: currentQuestion.prompt, topic: currentQuestion.topic || 'general', userAnswer: selectedAnswer || "No answer", correctAnswer: currentQuestion.correctAnswer, isCorrect: false, subject: selectedQuiz.subject.toLowerCase() }], score, selectedQuiz.questions.length);
+          
+        // Update ref
+        quizStateRef.current.quizCompleted = true;
       }
     }
     
     return () => clearTimeout(timer);
-  }, [quizStarted, quizCompleted, timeLeft, viewingResults, currentQuestionIndex, selectedQuiz, selectedAnswer, userAnswers]);
+  }, [timeLeft]); // Only depend on timeLeft
   
   // Reset the quiz selection
   const resetQuiz = () => {
     setSelectedQuiz(null);
     setQuizStarted(false);
+    
+    // Update ref values
+    quizStateRef.current = {
+      ...quizStateRef.current,
+      quizStarted: false,
+      quizCompleted: false,
+      timeLeft: null,
+      selectedQuiz: null
+    };
     setViewingResults(false);
   };
   
@@ -226,11 +278,23 @@ function MainFeature() {
     // Analyze quiz results to provide adaptive content recommendations
     const analysis = analyzeQuizPerformance(userAnswers);
     setQuizAnalysis(analysis);
+    
+    // Update ref
+    quizStateRef.current.viewingResults = true;
   };
   
   // View adaptive learning recommendations
   const viewAdaptiveContent = () => {
     setShowAdaptiveContent(true);
+    
+    // Update ref
+    quizStateRef.current.showAdaptiveContent = true;
+  };
+  
+  const backToResults = () => {
+    setShowAdaptiveContent(false);
+    // Update ref
+    quizStateRef.current.showAdaptiveContent = false;
   };
   
   const backToResults = () => {
