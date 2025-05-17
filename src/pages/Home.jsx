@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getIcon } from '../utils/iconUtils';
 import MainFeature from '../components/MainFeature';
@@ -68,6 +69,7 @@ function Home() {
   const UsersIcon = getIcon('Users');
   const ClockIcon = getIcon('Clock');
   const BookOpenIcon = getIcon('BookOpen');
+  const BookIcon = getIcon('Book');
   const SearchIcon = getIcon('Search');
   const FilterIcon = getIcon('Filter');
   const AwardIcon = getIcon('Award');
@@ -262,10 +264,21 @@ function Home() {
                       </div>
                     ) : (
                       <div className="mt-4 flex gap-2">
+                        <Link
+                          to={`/course/${course.id}`}
+                          className="flex-1 py-2 px-4 bg-primary-light dark:bg-primary-dark text-primary dark:text-primary-light rounded-lg 
+                                    border border-primary/20 transition-colors duration-300 flex items-center justify-center gap-2"
+                        >
+                          <BookIcon className="w-4 h-4" />
+                          View Materials
+                        </Link>
                         <button
                           onClick={() => handleCompleteCourse(course)}
-                          className="w-full py-2 px-4 bg-primary hover:bg-primary-dark text-white rounded-lg 
+                          className="flex-1 py-2 px-4 bg-primary hover:bg-primary-dark text-white rounded-lg 
                                     transition-colors duration-300 flex items-center justify-center gap-2"
+                          title="Skip learning materials and complete course directly"
+                          aria-label="Complete course and get certificate without studying materials"
+                          
                         >
                           Complete Course & Get Certificate
                         </button>

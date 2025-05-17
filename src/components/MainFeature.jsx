@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion'; 
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getIcon } from '../utils/iconUtils';
 import { useLearningProfile } from '../context/LearningProfileContext';
@@ -132,6 +133,7 @@ function MainFeature() {
   const TrendingUpIcon = getIcon('TrendingUp');
   const TargetIcon = getIcon('Target');
   const ZapIcon = getIcon('Zap');
+  const BookIcon = getIcon('Book');
   
   // Start a quiz
   const startQuiz = (quiz) => {
@@ -289,15 +291,6 @@ function MainFeature() {
     
     // Update ref
     quizStateRef.current.showAdaptiveContent = true;
-  };
-  
-  const backToResults = () => {
-    setShowAdaptiveContent(false);
-    // Update ref
-    quizStateRef.current = {
-      ...quizStateRef.current,
-      showAdaptiveContent: false
-    };
   };
   
   // Component for quiz selection
@@ -562,7 +555,18 @@ function MainFeature() {
                             <span className="text-surface-500 dark:text-surface-400">Correct answer: </span>
                             <span className="text-green-600 dark:text-green-400 font-medium">{answer.correctAnswer}</span>
                           </div>
-                        )}
+                          )}
+                          {!answer.isCorrect && (
+                            <div className="mt-2 text-sm bg-surface-100 dark:bg-surface-800 p-2 rounded">
+                              <span className="font-medium">Learning Recommendation: </span>
+                              <Link 
+                                to={`/course/${selectedQuiz.id === 1 ? 1 : selectedQuiz.id === 2 ? 2 : 3}`}
+                                className="text-primary hover:underline flex items-center gap-1 mt-1"
+                              >
+                                <BookIcon className="w-4 h-4" /> View related learning materials
+                              </Link>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -573,16 +577,16 @@ function MainFeature() {
               <div className="mt-6">
                 <div className="flex justify-end gap-3">
                   <button
-                    onClick={viewAdaptiveContent}
-                    className="btn btn-primary flex items-center justify-center gap-2"
-                  >
-                    <ZapIcon className="w-4 h-4" /> View Personalized Path
-                  </button>
-                  <button
                     onClick={resetQuiz}
                     className="btn btn-outline flex items-center justify-center gap-2"
                   >
-                    <RotateCcwIcon className="w-4 h-4" /> Try Another Quiz
+                    <RotateCcwIcon className="w-4 h-4" /> New Quiz
+                  </button>
+                  <Link
+                    to={`/course/${selectedQuiz.id === 1 ? 1 : selectedQuiz.id === 2 ? 2 : 3}`}
+                    className="btn btn-primary flex items-center justify-center gap-2"
+                  >
+                    <BookIcon className="w-4 h-4" /> Study Materials
                   </button>
                 </div>
               </div>
@@ -620,7 +624,7 @@ function MainFeature() {
                 <div className="border-t border-surface-200 dark:border-surface-700 pt-4 mt-4">
                   <div className="text-sm mb-2">Based on your quiz results, we've adjusted your learning path:</div>
                   <ul className="text-sm list-disc list-inside space-y-1 pl-2">
-                    {userAnswers.some(a => !a.isCorrect) && (
+                    {userAnswers.length > 0 && userAnswers.some(a => !a.isCorrect) && (
                       <li>We'll provide more practice on topics you found challenging</li>
                     )}
                     {percentage >= 70 && (
@@ -631,10 +635,16 @@ function MainFeature() {
                 </div>
               </div>
               
-              <div className="mt-6 flex justify-end gap-3">
-                <button onClick={backToResults} className="btn btn-outline">Back to Results</button>
-                <button onClick={resetQuiz} className="btn btn-primary">
-                  Try Another Quiz
+              <div className="mt-6 flex flex-wrap justify-end gap-3">
+                <button 
+                  onClick={() => {
+                    setShowAdaptiveContent(false);
+                    quizStateRef.current.showAdaptiveContent = false;
+                  }} 
+                  className="btn btn-outline">Back to Results</button>
+                <Link to={`/course/${selectedQuiz.id === 1 ? 1 : selectedQuiz.id === 2 ? 2 : 3}`}
+                     className="btn btn-primary flex items-center justify-center gap-2">
+                  <BookIcon className="w-4 h-4" /> Access Learning Materials
                 </button>
               </div>
             </div>

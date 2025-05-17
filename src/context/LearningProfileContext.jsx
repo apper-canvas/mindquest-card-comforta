@@ -20,6 +20,7 @@ const initialLearningProfile = {
       difficultyLevel: 'beginner',
       quizAttempts: [],
       topics: {}
+    contentProgress: {},
     },
     mathematics: {
       proficiencyScore: 0,
@@ -93,13 +94,28 @@ export function LearningProfileProvider({ children }) {
       } catch (error) {
         toast.error(`Certificate generation failed: ${error.message}`);
       }
-      
+
       return {
         ...prevProfile,
         completedCourses: [...(prevProfile.completedCourses || []), completedCourse],
         certificates: [...(prevProfile.certificates || []), certificateData]
       };
-    });
+      completedCourses: [...prev.completedCourses.filter(c => c.id !== course.id), course]
+    }));
+    
+    return true;
+  };
+  
+  // Update content progress for a specific course
+  const updateContentProgress = (courseId, progress) => {
+    if (!courseId) return false;
+    
+    setLearningProfile(prev => ({
+      ...prev,
+      contentProgress: {
+        ...prev.contentProgress,
+        [courseId]: progress
+      }
     
     return true;
   };
@@ -109,7 +125,8 @@ export function LearningProfileProvider({ children }) {
    * 
    * @param {Object} quizData - The quiz data including subject and title
    * @param {Array} userAnswers - Array of user's answers with correctness information
-   * @param {Number} score - Number of correct answers
+    generateLearningPath,
+    updateContentProgress
    * @param {Number} totalQuestions - Total number of questions
    */
   const recordQuizAttempt = (quizData, userAnswers, score, totalQuestions) => {

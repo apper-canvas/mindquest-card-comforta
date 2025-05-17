@@ -11,6 +11,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import Profile from './pages/Profile';
 import Certificate from './pages/Certificate';
+import CourseContent from './pages/CourseContent';
 import Certificates from './pages/Certificates';
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
   const MoonIcon = getIcon('Moon');
   const UserIcon = getIcon('User');
   const MenuIcon = getIcon('Menu');
+  const BookIcon = getIcon('Book');
   const AwardIcon = getIcon('Award');
   return (
     <LearningProfileProvider>
@@ -74,6 +76,9 @@ function App() {
                   </Link>
                   <Link to="/certificates" className="text-surface-700 dark:text-surface-300 hover:text-primary dark:hover:text-primary transition-colors">
                     Certificates
+                  </Link>
+                  <Link to="/learning" className="text-surface-700 dark:text-surface-300 hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1">
+                    <BookIcon className="w-4 h-4" /> Learning Materials
                   </Link>
                   <button onClick={handleLogout} className="text-surface-700 dark:text-surface-300 hover:text-primary dark:hover:text-primary transition-colors">
                     Logout
@@ -109,6 +114,7 @@ function App() {
                     <>
                       <Link to="/profile" className="block px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 w-full text-left">Profile</Link>
                       <Link to="/certificates" className="block px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 w-full text-left">Certificates</Link>
+                      <Link to="/learning" className="block px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 w-full text-left flex items-center gap-2"><BookIcon className="w-4 h-4" /> Learning Materials</Link>
                       <button onClick={handleLogout} className="block px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 w-full text-left">Logout</button>
                     </>
                   ) : (
@@ -133,6 +139,7 @@ function App() {
           } />
           <Route path="/certificate/:id" element={currentUser ? <Certificate /> : <Navigate to="/login" replace />} />
           <Route path="/certificates" element={currentUser ? <Certificates /> : <Navigate to="/login" replace />} />
+          <Route path="/course/:id" element={currentUser ? <CourseContent /> : <Navigate to="/login" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
