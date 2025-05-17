@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useLearningProfile } from '../context/LearningProfileContext';
+import { generateLearningPath } from '../utils/adaptiveLearningUtils';
 import { getIcon } from '../utils/iconUtils';
 
-function LearningPathDisplay() {
+function LearningPathDisplay({ detailed = false }) {
   const { learningProfile } = useLearningProfile();
   const [activeSubject, setActiveSubject] = useState(Object.keys(learningProfile.subjects)[0]);
   
@@ -14,6 +15,12 @@ function LearningPathDisplay() {
   const BookIcon = getIcon('Book');
   const GitBranchIcon = getIcon('GitBranch');
   const BrainIcon = getIcon('Brain');
+  const CheckCircleIcon = getIcon('CheckCircle');
+  const CircleIcon = getIcon('Circle');
+  const ZapIcon = getIcon('Zap');
+  const PuzzleIcon = getIcon('Puzzle');
+  const BookOpenIcon = getIcon('BookOpen');
+  const GraduationCapIcon = getIcon('GraduationCap');
   
   // Helper function to get a color based on proficiency score
   const getProficiencyColor = (score) => {
@@ -27,6 +34,18 @@ function LearningPathDisplay() {
   // Helper function to get level name for display
   const getLevelName = (level) => {
     return level.charAt(0).toUpperCase() + level.slice(1);
+  };
+  
+  // Helper function to get the appropriate icon for a milestone type
+  const getMilestoneIcon = (type) => {
+    switch (type) {
+      case 'course': return BookOpenIcon;
+      case 'practice': return PuzzleIcon;
+      case 'challenge': return ZapIcon;
+      case 'project': return GraduationCapIcon;
+      case 'research': return BrainIcon;
+      default: return BookIcon;
+    }
   };
   
   // Generate recommendations based on proficiency
@@ -59,12 +78,13 @@ function LearningPathDisplay() {
     return recommendations;
   };
   
+  const learningPath = generateLearningPath(learningProfile, activeSubject);
+  
   return (
-    <div className="card p-6">
+    <div className={`card p-6 ${detailed ? 'max-w-5xl mx-auto' : ''}`}>
       <div className="flex items-center gap-2 mb-6">
         <GitBranchIcon className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-bold">Your Adaptive Learning Path</h2>
-      </div>
+        <h2 className="text-xl font-bold">Your Personalized Learning Path</h2>      </div>
       
       {/* Subject Tabs */}
       <div className="flex border-b border-surface-200 dark:border-surface-700 mb-6">
@@ -108,6 +128,58 @@ function LearningPathDisplay() {
             <div className="text-xs text-surface-500 flex justify-between">
               <span>Beginner</span>
               <span>Expert</span>
+            </div>
+          </div>
+          
+          {/* Learning Path Timeline */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUpIcon className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold">Adaptive Learning Roadmap</h3>
+            </div>
+            
+            <div className="relative">
+              {/* Timeline Track */}
+              <div className="absolute left-[22px] top-7 bottom-7 w-1 bg-surface-300 dark:bg-surface-600 rounded"></div>
+              
+              {/* Milestones */}
+              <div className="space-y-8">
+                {learningPath.milestones.map((milestone, index) => {
+                  const MilestoneIcon = getMilestoneIcon(milestone.type);
+                  return (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={`flex items-start gap-4 ${milestone.completed ? 'text-surface-800 dark:text-surface-100' : 'text-surface-500 dark:text-surface-400'}`}
+                    >
+                      <div className="relative z-10 flex-shrink-0 mt-1">
+                        {milestone.completed ? (
+                          <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center text-white">
+                            <CheckCircleIcon className="h-5 w-5" />
+                          </div>
+                        ) : milestone.current ? (
+                          <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-white pulse-animation">
+                            <CircleIcon className="h-5 w-5" />
+                          </div>
+                        ) : (
+                          <div className="h-6 w-6 rounded-full border-2 border-surface-300 dark:border-surface-600 bg-surface-100 dark:bg-surface-800 flex items-center justify-center">
+                            <CircleIcon className="h-4 w-4 text-surface-400 dark:text-surface-500" />
+                          </div>
+                        )}
+                      </div>
+                      <div className={`flex-1 ${!milestone.unlocked ? 'opacity-60' : ''}`}>
+                        <div className="flex items-center gap-2">
+                          <MilestoneIcon className="h-4 w-4 text-primary" />
+                          <div className="font-medium">{milestone.title}</div>
+                        </div>
+                        <div className="text-sm text-surface-600 dark:text-surface-300 mt-1">{milestone.description}</div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
           </div>
           
@@ -170,3 +242,15 @@ function LearningPathDisplay() {
 }
 
 export default LearningPathDisplay;
+
+// Add pulse animation
+const style = document.createElement('style');
+style.innerHTML = `
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  }
+  .pulse-animation { animation: pulse 2s infinite; }
+`;
+document.head.appendChild(style);
