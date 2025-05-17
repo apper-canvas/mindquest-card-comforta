@@ -22,8 +22,7 @@ const PROFICIENCY_THRESHOLDS = {
   80: DIFFICULTY_LEVELS.EXPERT      // 80-100% proficiency
 };
 
- * Calculate proficiency score based on quiz performance
-}
+/** Calculate proficiency score based on quiz performance */
 
 /**
  * Generates a personalized learning path based on the learning profile
@@ -90,7 +89,8 @@ export function generateLearningPath(learningProfile, subject) {
   
   return { milestones, progress: proficiencyScore, difficultyLevel };
 }
- * Uses a weighted algorithm that gives more importance to recent performance
+
+/** Uses a weighted algorithm that gives more importance to recent performance
  * 
  * @param {Array} quizAttempts - Array of previous quiz attempts with scores
  * @param {Object} latestAttempt - Latest quiz attempt data
