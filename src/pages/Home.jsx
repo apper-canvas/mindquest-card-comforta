@@ -196,85 +196,85 @@ function Home() {
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredCourses.length > 0 ? (
-            filteredCourses.map(course => (
+            filteredCourses.map(course => {
               // Check if the course is in completedCourses
-              (() => {
-                const isCompleted = learningProfile.completedCourses &&
-                  learningProfile.completedCourses.some(c => c.id === course.id);
-                return (
-              <div 
-                key={course.id} 
-                className="card overflow-hidden group hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={course.image} 
-                    alt={course.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute top-3 right-3 bg-white dark:bg-surface-800 rounded-full px-2 py-1 text-xs font-medium flex items-center gap-1">
-                    <StarIcon className="w-3 h-3 text-accent" />
-                    {course.rating}
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                    <div className="flex gap-2">
-                      <span className="text-xs font-semibold text-white px-2 py-1 rounded-full bg-primary/80">
-                        {course.level}
-                      </span>
-                      {isCompleted && (
-                        <span className="text-xs font-semibold text-white px-2 py-1 rounded-full bg-green-500/80 flex items-center gap-1"><AwardIcon className="w-3 h-3" /> Completed</span>
-                      )}
+              const isCompleted = learningProfile.completedCourses &&
+                learningProfile.completedCourses.some(c => c.id === course.id);
+              
+              return (
+                <div 
+                  key={course.id} 
+                  className="card overflow-hidden group hover:shadow-lg transition-shadow duration-300"
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={course.image} 
+                      alt={course.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute top-3 right-3 bg-white dark:bg-surface-800 rounded-full px-2 py-1 text-xs font-medium flex items-center gap-1">
+                      <StarIcon className="w-3 h-3 text-accent" />
+                      {course.rating}
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                      <div className="flex gap-2">
+                        <span className="text-xs font-semibold text-white px-2 py-1 rounded-full bg-primary/80">
+                          {course.level}
+                        </span>
+                        {isCompleted && (
+                          <span className="text-xs font-semibold text-white px-2 py-1 rounded-full bg-green-500/80 flex items-center gap-1"><AwardIcon className="w-3 h-3" /> Completed</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="p-4">
-                  <div className="text-xs text-primary-dark dark:text-primary-light font-semibold mb-2">
-                    {course.category}
-                  </div>
-                  <h3 className="font-bold text-lg mb-2 line-clamp-2">{course.title}</h3>
                   
-                  <div className="flex flex-wrap gap-3 mt-3 text-surface-500 dark:text-surface-400 text-xs">
-                    <div className="flex items-center gap-1">
-                      <UsersIcon className="w-4 h-4" />
-                      <span>{new Intl.NumberFormat().format(course.enrolled)} students</span>
+                  <div className="p-4">
+                    <div className="text-xs text-primary-dark dark:text-primary-light font-semibold mb-2">
+                      {course.category}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <BookOpenIcon className="w-4 h-4" />
-                      <span>{course.modules} modules</span>
+                    <h3 className="font-bold text-lg mb-2 line-clamp-2">{course.title}</h3>
+                    
+                    <div className="flex flex-wrap gap-3 mt-3 text-surface-500 dark:text-surface-400 text-xs">
+                      <div className="flex items-center gap-1">
+                        <UsersIcon className="w-4 h-4" />
+                        <span>{new Intl.NumberFormat().format(course.enrolled)} students</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <BookOpenIcon className="w-4 h-4" />
+                        <span>{course.modules} modules</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <ClockIcon className="w-4 h-4" />
+                        <span>{course.duration}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <ClockIcon className="w-4 h-4" />
-                      <span>{course.duration}</span>
-                    </div>
-                  </div>
 
-                  {isCompleted ? (
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={() => window.location.href = `/certificate/${learningProfile.certificates.find(cert => cert.courseId === course.id)?.id}`}
-                        className="flex-1 py-2 px-4 bg-secondary hover:bg-secondary-dark text-white rounded-lg 
-                                  transition-colors duration-300 flex items-center justify-center gap-2"
-                      >
-                        <AwardIcon className="w-4 h-4" />
-                        View Certificate
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={() => handleCompleteCourse(course)}
-                        className="w-full py-2 px-4 bg-primary hover:bg-primary-dark text-white rounded-lg 
-                                  transition-colors duration-300 flex items-center justify-center gap-2"
-                      >
-                        Complete Course & Get Certificate
-                      </button>
-                    </div>
-                  )}
+                    {isCompleted ? (
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          onClick={() => window.location.href = `/certificate/${learningProfile.certificates.find(cert => cert.courseId === course.id)?.id}`}
+                          className="flex-1 py-2 px-4 bg-secondary hover:bg-secondary-dark text-white rounded-lg 
+                                    transition-colors duration-300 flex items-center justify-center gap-2"
+                        >
+                          <AwardIcon className="w-4 h-4" />
+                          View Certificate
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          onClick={() => handleCompleteCourse(course)}
+                          className="w-full py-2 px-4 bg-primary hover:bg-primary-dark text-white rounded-lg 
+                                    transition-colors duration-300 flex items-center justify-center gap-2"
+                        >
+                          Complete Course & Get Certificate
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>)})()
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="col-span-full text-center py-10">
               <div className="text-surface-500 dark:text-surface-400 text-lg">
