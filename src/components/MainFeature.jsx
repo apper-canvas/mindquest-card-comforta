@@ -506,16 +506,18 @@ function MainFeature() {
               </div>
               
               <div className="mt-6 flex justify-end">
-                <button
-                  onClick={viewAdaptiveContent}
-                  className="btn btn-primary flex items-center justify-center gap-2 mr-3"
-                >
-                  <ZapIcon className="w-4 h-4" /> View Personalized Path
-                </button>
-                <button
-                  onClick={resetQuiz}
-                  className="btn btn-outline flex items-center justify-center gap-2"
-                >
+              <div className="mt-6">
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={viewAdaptiveContent}
+                    className="btn btn-primary flex items-center justify-center gap-2"
+                  >
+                    <ZapIcon className="w-4 h-4" /> View Personalized Path
+                  </button>
+                  <button
+                    onClick={resetQuiz}
+                    className="btn btn-outline flex items-center justify-center gap-2"
+                  >
                   <RotateCcwIcon className="w-4 h-4" /> Try Another Quiz
                 </button>
               </div>
