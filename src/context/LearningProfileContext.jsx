@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useContext } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
 import { calculateProficiencyScore, determineDifficultyLevel } from '../utils/adaptiveLearningUtils';
